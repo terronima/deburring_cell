@@ -1,8 +1,10 @@
 ﻿import socket
+import sys
 import threading
 import time
 import random
 import keyboard
+from _thread import interrupt_main
 
 HEADER = 64
 PORT = 12347
@@ -12,20 +14,22 @@ FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 CLIENT_TRACKING = []
 Temp_data_storage = ''
+QUIT = ''
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
-def close_server():
+'''def close_server():
     while True:
         try:
             if keyboard.is_pressed("q"):
                 print("The 'q' is pressed")
                 time.sleep(1)
-                continue
+                QUIT = "q"
+                interrupt_main()
         except:
-            continue
+            continue'''
 
 
 def isopen(conn, addr):
