@@ -2,6 +2,7 @@
 import threading
 import time
 import random
+import keyboard
 
 HEADER = 64
 PORT = 12347
@@ -14,6 +15,17 @@ Temp_data_storage = ''
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
+
+
+def close_server():
+    while True:
+        try:
+            if keyboard.is_pressed("q"):
+                print("The 'q' is pressed")
+                time.sleep(1)
+                continue
+        except:
+            continue
 
 
 def isopen(conn, addr):
@@ -105,5 +117,7 @@ def start():
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
 
+thread = threading.Thread(target=close_server)
+thread.start()
 print("[STARTING] Server is starting")
 start()

@@ -51,9 +51,12 @@ def listen():
             client.connect(ADDR)
         #if received:
         print(f"Received: {received}")
-        user_input = input()
-        send(f"{user_input}")
-        print(f"Sent: {user_input}")
+
+
+def send_user_input():
+    user_input = input()
+    send(f"{user_input}")
+    print(f"Sent: {user_input}")
 
 
 '''
@@ -78,8 +81,9 @@ print(f"Received: {received}")
             else:
 '''
 
-thread = threading.Thread(listen())
+thread = threading.Thread(target=send_user_input)
 thread.start()
+listen()
 print(f"thread is alive: {thread.is_alive()}")
 time.sleep(5)
 if not thread.is_alive():

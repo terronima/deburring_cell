@@ -818,6 +818,7 @@ class Ui_MainWindow(object):
                 print(f"Exception captured")
                 reconnect()
 
+
     def camera_trig_button(self):
         print("Camera triggered")
         self.send("HMI,cam,send_cam_data_HMI")
@@ -839,10 +840,6 @@ class Ui_MainWindow(object):
                     print(f"received: {recv}")
             except:
                 reconnect()
-                if recv == "name":
-                    data = "HMI"
-                    self.send(f"{data}")
-                    print(f"Sent: {data}")
                 if cntr == 2:
                     sys.exit()
                 cntr += 1
