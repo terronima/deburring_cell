@@ -829,6 +829,7 @@ class Ui_MainWindow(object):
         self.send("HMI,r1,resume")
 
     def status_updates(self):
+        cntr = 0
         recv = ""
         while True:
             QCoreApplication.processEvents()
@@ -838,6 +839,13 @@ class Ui_MainWindow(object):
                     print(f"received: {recv}")
             except:
                 reconnect()
+                if recv == "name":
+                    data = "HMI"
+                    self.send(f"{data}")
+                    print(f"Sent: {data}")
+                if cntr == 2:
+                    sys.exit()
+                cntr += 1
             if len(recv) == 36:
                 self.trig_camera(recv)
             if recv[0] == "q":
