@@ -121,7 +121,7 @@ def start():
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
 
-thread = threading.Thread(target=close_server)
-thread.start()
+'''thread = threading.Thread(target=close_server)
+thread.start()'''
 print("[STARTING] Server is starting")
 start()
