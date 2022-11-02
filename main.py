@@ -46,18 +46,23 @@ elif side_by_side:
             print(f"Only right selected, pick pos: {cntr}")
         cntr += 1
 
-arr_1 = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+arr_1 = [0, 1, 2, 3, 4]
 arr_2 = []
-j = 2
+step = 3
 ctr = 1
-next_step = 0
+j = min(step - 1, len(arr_1) - 1)
+step_over = 0
 for i in range(0, int(len(arr_1))):
+    if j > len(arr_1) - 1 and step_over:
+        break
+    if j >= len(arr_1):
+        j = j - (j - (len(arr_1) - 1))
+        step_over = 1
+    print(f"j value: {j}")
     arr_2.append(arr_1[j])
     j -= 1
-    if j == -1:
-        j = 5
-    elif j == 2:
-        j = 8
-
+    if j == (step * ctr) - (step + 1):
+        j = step * ctr + 2
+        ctr += 1
 
 print(arr_2)
