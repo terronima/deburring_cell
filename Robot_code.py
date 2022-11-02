@@ -109,23 +109,23 @@ def greet():
     global SIDE
     global PAUSE
     global PICK_MODE
-    while True:
-        try:
-            received = client.recv(HEADER).decode(FORMAT)
-        except:
-            break
-        if received:
-            tp_log("Received: " + received)
-            if received == "name":
-                data = "r1"
-                send(data)
-                tp_log("Sent: " + data)
-            elif received == "side_by_side" or received == "intermittent" or received == "left_only" or received == "right_only":
-                PICK_MODE = received
-            elif received == "paused":
-                PAUSE = 1
-            elif received == "continue":
-                PAUSE = 0
+    # while True:
+    try:
+        received = client.recv(HEADER).decode(FORMAT)
+    except:
+        break
+    if received:
+        tp_log("Received: " + received)
+        if received == "name":
+            data = "r1"
+            send(data)
+            tp_log("Sent: " + data)
+        elif received == "side_by_side" or received == "intermittent" or received == "left_only" or received == "right_only":
+            PICK_MODE = received
+        elif received == "paused":
+            PAUSE = 1
+        elif received == "continue":
+            PAUSE = 0
 
 
 
