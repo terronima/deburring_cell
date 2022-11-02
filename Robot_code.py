@@ -154,6 +154,12 @@ def pick():
     R_pallet_map = pallet_map[0:9]
     New_R_pallet_map = ""
     j = 2
+    pallet_place = 0
+    side_l = None
+    side_j = None
+    delta_x = None
+    delta_y = None
+    ref_c = None
     for i in range(0, int(len(pallet_map[0:9]))):
         New_R_pallet_map += str(pallet_map[j])
         j -= 1
@@ -248,7 +254,8 @@ def pick():
 
 # Deburr L function
 def deburr_L(*Faces, ref_c):
-    NEW_COORDINATE_SYS_FLAG = 0
+    global NEW_COORDINATE_SYS_FLAG
+    global NEW_COORDINATE_SYS
     for m in Faces:
         Face_points = []
         L_Face = []
@@ -314,7 +321,8 @@ def deburr_L(*Faces, ref_c):
 
 # Deburr R function
 def deburr_R(*Faces, ref_c):
-    NEW_COORDINATE_SYS_FLAG = 0
+    global NEW_COORDINATE_SYS_FLAG
+    global NEW_COORDINATE_SYS
     for m in Faces:
         Face_points = []
         R_Face = []
