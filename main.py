@@ -5,7 +5,7 @@ import threading
 from threadstest import myThread
 
 # test splitting sequence (0-8 are rights, 9-17 are lefts)
-camera_data = [1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0]
+camera_data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 only_left = 0
 only_right = 0
 intermittent = 1
@@ -29,9 +29,9 @@ elif intermittent:
     string_of_picks = ""
     for i in range(0, int(len(camera_data) / 2)):
         pick_el_1 = i
+        pick_el_2 = i + int(len(camera_data) / 2)
         if camera_data[pick_el_1] == 1:
             string_of_picks += str(i) + ','
-        pick_el_2 = i + int(len(camera_data) / 2)
         if camera_data[pick_el_2] == 1:
             string_of_picks += str(pick_el_2) + ','
     print(f"parts to be picked {string_of_picks}")
