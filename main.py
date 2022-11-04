@@ -1,8 +1,3 @@
-import socket
-from server_multiple import MyTCPHandler
-import socketserver
-import threading
-from threadstest import myThread
 
 # test splitting sequence (0-8 are rights, 9-17 are lefts)
 camera_data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -46,9 +41,9 @@ elif side_by_side:
             print(f"Only right selected, pick pos: {cntr}")
         cntr += 1
 
-arr_1 = [0, 1, 2, 3, 4]
+arr_1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 arr_2 = []
-step = 3
+step = 2
 ctr = 1
 j = min(step - 1, len(arr_1) - 1)
 step_over = 0
