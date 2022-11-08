@@ -27,6 +27,7 @@ safe_acc = 200
 deburr_acc = 50
 set_tool("right part")
 SIDE = "R"
+camera_map = ""
 
 # ONLY_LEFT = 1, ONLY_RIGHT = 2, INTERMITTENT = 3, SIDE_BY_SIDE = 4
 PICK_MODE = ""
@@ -413,7 +414,8 @@ def handover():
 if GREET == 0:
     greet()
     GREET = 1
-camera_map = send("r1,cam,r1_send_cam_data")
+if not camera_map:
+    camera_map = send("r1,cam,r1_send_cam_data")
 pick(camera_map)
 if SIDE == "L":
     deburr_L()

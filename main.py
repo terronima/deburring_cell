@@ -3,7 +3,7 @@
 camera_data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 only_left = 0
 only_right = 0
-intermittent = 1
+intermittent = 0
 side_by_side = 0
 
 if only_left:
@@ -41,9 +41,9 @@ elif side_by_side:
             print(f"Only right selected, pick pos: {cntr}")
         cntr += 1
 
-arr_1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+arr_1 = [0, 1, 2, 3, 4]
 arr_2 = []
-step = 2
+step = 5
 ctr = 1
 j = min(step - 1, len(arr_1) - 1)
 step_over = 0
@@ -57,7 +57,13 @@ for i in range(0, int(len(arr_1))):
     arr_2.append(arr_1[j])
     j -= 1
     if j == (step * ctr) - (step + 1):
-        j = step * ctr + 2
+        j = step * ctr + step - 1
         ctr += 1
 
 print(arr_2)
+# map = "00000"
+# if not int(map):
+#     map[1] = "1"
+#     print(f"the map variable is {map}")
+# else:
+#     print(map)
