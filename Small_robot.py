@@ -35,19 +35,19 @@ def greet():
             tp_log("Received: " + received)
             if received == "name":
                 data = "r2"
-                send(data)
+                send(data, 1)
                 tp_log("Sent: " + data)
                 break
 
 
-def send(msg):
+def send(msg, resp_req):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * ((HEADER) - len(send_length))
     client.send(send_length)
     client.send(message)
-    while True:
+    while resp_req:
         data = client.recv(1024).decode(FORMAT)
         if data != "ping":
             tp_log(str(data))
@@ -100,14 +100,35 @@ def deburr(pos, ref_c):
     set_ref_coord(DR_BASE)
 
 
+def dip_part():
+    if get_digital_input(level_sensor_low):
+        send("r2,HMI,r2_faulted", 0)
+    else:
+        Global_above_basin_l = trans(Global_basin_l, [0, 0, 300, 0, 0, 0], ref=DR_BASE)
+        set_velx(deburr_vel)
+        set_accx(safe_acc)
+        movej(Global_above_basin_j)
+        movel(Global_above_basin_l)
+        movel(Global_basin_l)
+        wait(1)
+        movel(Global_above_basin_l)
+        movej(Global_above_basin_j)
+        movej(Global_standby)
+
+
+
 def place():
     stiffness = [500, 500, 500, 1000, 1000, 1000]
     force_desired = 50.0  # set desired force
     f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]  # set force direction
     f_dir = [0, 0, 1, 0, 0, 0]  # set axis at which force would be applied (x, y, z, a, b, c)
-    pallet_map = send("r2,cam,r2_send_cam_data")
+    pallet_map = send("r2,cam,r2_send_cam_data", 1)
     tp_log(str(pallet_map))
     cntr = 0
+    pallet_place = 0
+    side_l = 0
+    side_j = 0
+    ref_c = 0
     if SIDE == "L":
         ref_c = 107
         side_l = Global_place_L
@@ -161,8 +182,8 @@ def pick():
     movel(Handover_above)
     set_digital_output(6, 1)
     wait(0.5)
-    SIDE = send("r2,r1,side")
-    data = send("r2,r1,ready")
+    SIDE = send("r2,r1,side", 1)
+    data = send("r2,r1,ready", 1)
     if data == "ready":
         movel(Global_handover, vel=35)
         task_compliance_ctrl(stiffness)
@@ -170,9 +191,9 @@ def pick():
         wait(2)
         set_digital_output(6, 0)
         wait(0.5)
-    data = send("r2,r1,secured")
+    data = send("r2,r1,secured", 1)
     if data == "part_released":
-        send("r2,r1,done")
+        send("r2,r1,done", 0)
         movel(Handover_above)
     release_force()
     release_compliance_ctrl()
