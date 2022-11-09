@@ -690,18 +690,7 @@ class Ui_MainWindow(object):
         self.PB_Reset_LR_Wheel.clicked.connect(self.reset_grind_wheel_l)
         self.PB_Pause_seq.clicked.connect(self.pause_seq)
         self.PB_Resume_seq.clicked.connect(self.resume_seq)
-        self.RB_One_side.clicked.connect(self.seq_state_1)
-        self.RB_Intermittent.clicked.connect(self.seq_state_2)
-        self.RB_Left_only.clicked.connect(self.seq_state_3)
-        self.RB_Right_only.clicked.connect(self.seq_state_4)
-        if self.RB_One_side.isChecked():
-            self.side = "side_by_side"
-        if self.RB_Intermittent.isChecked():
-            self.side = "intermittent"
-        if self.RB_Left_only.isChecked():
-            self.side = "left_only"
-        if self.RB_Right_only.isChecked():
-            self.side = "right_only"
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -782,22 +771,6 @@ class Ui_MainWindow(object):
         self.PB_Trig_Cam.setText(_translate("MainWindow", "Trigger camera"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
 
-    def seq_state_1(self):
-        self.side = "side_by_side"
-        self.send(f"HMI,r1,{self.side}")
-
-    def seq_state_2(self):
-        self.side = "intermittent"
-        self.send(f"HMI,r1,{self.side}")
-
-    def seq_state_3(self):
-        self.side = "left_only"
-        self.send(f"HMI,r1,{self.side}")
-
-    def seq_state_4(self):
-        self.side = "right_only"
-        self.send(f"HMI,r1,{self.side}")
-
     def encode(self, enc_msg):
         message = enc_msg.encode(FORMAT)
         msg_length = len(message)
@@ -845,6 +818,16 @@ class Ui_MainWindow(object):
                 cntr += 1
             if len(recv) == 36:
                 self.trig_camera(recv)
+            if recv == "PICK_MODE":
+                if self.RB_One_side.isChecked():
+                    self.side = "side_by_side"
+                elif self.RB_Intermittent.isChecked():
+                    self.side = "intermittent"
+                elif self.RB_Left_only.isChecked():
+                    self.side = "left_only"
+                elif self.RB_Right_only.isChecked():
+                    self.side = "right_only"
+                self.send(f"HMI,r1,{self.side}")
             if recv[0] == "q":
                 if recv[1] == "b":
                     if recv[2] == "r":
@@ -917,11 +900,15 @@ class Ui_MainWindow(object):
             d = int(i)
             if d == 1:
                 self.check_box_sr_list[ctr1].setChecked(True)
+            else:
+                self.check_box_sr_list[ctr1].setChecked(False)
             ctr1 += 1
         for i in camera_data_list_lr:
             d = int(i)
             if d == 1:
                 self.check_box_lr_list[ctr2].setChecked(True)
+            else:
+                self.check_box_lr_list[ctr2].setChecked(False)
             ctr2 += 1
 
     def display_lr_wheel_stat(self):

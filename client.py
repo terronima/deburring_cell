@@ -7,7 +7,7 @@ PORT = 12347
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "localhost"
-#SERVER = "192.168.1.10"
+# SERVER = "192.168.1.10"
 ADDR = (SERVER, PORT)
 RESPOND = "ready_to_transfer"
 
@@ -38,6 +38,7 @@ def send(msg):
         client.send(message_enc[0])
         client.send(message_enc[1])
 
+
 def listen():
     global client
     received = ""
@@ -49,14 +50,11 @@ def listen():
             print("Failed to receive response")
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(ADDR)
-        #if received:
-        print(f"Received: {received}")
-
-
-def send_user_input():
-    user_input = input()
-    send(f"{user_input}")
-    print(f"Sent: {user_input}")
+        if received != "ping":
+            print(f"Received: {received}")
+            user_input = input()
+            send(f"{user_input}")
+            print(f"Sent: {user_input}")
 
 
 '''
@@ -81,15 +79,14 @@ print(f"Received: {received}")
             else:
 '''
 
-thread = threading.Thread(target=send_user_input)
-thread.start()
+# thread = threading.Thread(target=send_user_input)
+# thread.start()
 listen()
-print(f"thread is alive: {thread.is_alive()}")
-time.sleep(5)
-if not thread.is_alive():
-    print("Trying to reconnect")
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
-    new_thread = threading.Thread(listen())
-    new_thread.start()
-
+# print(f"thread is alive: {thread.is_alive()}")
+# time.sleep(5)
+# if not thread.is_alive():
+#     print("Trying to reconnect")
+#     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#     client.connect(ADDR)
+#     new_thread = threading.Thread(listen())
+#     new_thread.start()
