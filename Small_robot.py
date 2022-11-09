@@ -27,7 +27,7 @@ safe_acc = [300, 300]
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
-
+# greet function, which will introduce robot to the server.
 def greet():
     while True:
         received = client.recv(HEADER).decode(FORMAT)
@@ -39,7 +39,7 @@ def greet():
                 tp_log("Sent: " + data)
                 break
 
-
+# send message to the destination through the server
 def send(msg, resp_req):
     message = msg.encode(FORMAT)
     msg_length = len(message)
@@ -53,7 +53,7 @@ def send(msg, resp_req):
             tp_log(str(data))
             return (data)
 
-
+# deburr sequence, move part to grinder, lightly touch the wheel, set new coord system, deburr the part (edge by edge)
 def deburr(pos, ref_c):
     F1_List = []
     set_velx(200, 200)
@@ -99,7 +99,7 @@ def deburr(pos, ref_c):
     # release_compliance_ctrl()                                                  #remove force from the axis
     set_ref_coord(DR_BASE)
 
-
+# dip part into the water tank, and lift under the air blade to blowout water
 def dip_part():
     if get_digital_input(level_sensor_low):
         send("r2,HMI,r2_faulted", 0)
@@ -111,12 +111,14 @@ def dip_part():
         movel(Global_above_basin_l)
         movel(Global_basin_l)
         wait(1)
+        set_digital_output(air_blade_on, 1)
         movel(Global_above_basin_l)
+        set_digital_output(air_blade_on, 0)
         movej(Global_above_basin_j)
         movej(Global_standby)
 
 
-
+# place sequence,take camera picture, find parts, transfer string with empty nest positions, place parton an empty nest
 def place():
     stiffness = [500, 500, 500, 1000, 1000, 1000]
     force_desired = 50.0  # set desired force
@@ -170,8 +172,9 @@ def place():
     release_force()
     release_compliance_ctrl()
 
-
+# get part from big robot, acknowledge transfer and side.
 def pick():
+    global SIDE
     stiffness = [500, 500, 500, 100, 100, 100]
     Handover_above = trans(Global_handover, [0, -100, 0, 0, 0, 0], DR_BASE)
     force_desired = 30.0  # set desired force
@@ -198,3 +201,13 @@ def pick():
     release_force()
     release_compliance_ctrl()
     movel(Global_safe)
+
+#----------------------------------------------------------------
+
+if not GREETING_SENT:
+    greet()
+    GREETING_SENT = 1
+pick()
+deburr()
+dip_part()
+place()

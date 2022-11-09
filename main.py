@@ -1,9 +1,9 @@
 
 # test splitting sequence (0-8 are rights, 9-17 are lefts)
-camera_data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+camera_data = [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1]
 only_left = 0
 only_right = 0
-intermittent = 0
+intermittent = 1
 side_by_side = 0
 
 if only_left:
@@ -40,7 +40,7 @@ elif side_by_side:
         if i == 1:
             print(f"Only right selected, pick pos: {cntr}")
         cntr += 1
-
+# flipping certain number of elements of the array
 arr_1 = [0, 1, 2, 3, 4]
 arr_2 = []
 step = 5

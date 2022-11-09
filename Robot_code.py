@@ -414,7 +414,7 @@ def handover():
 if GREET == 0:
     greet()
     GREET = 1
-if not camera_map:
+if not int(camera_map):
     camera_map = send("r1,cam,r1_send_cam_data")
 pick(camera_map)
 if SIDE == "L":
