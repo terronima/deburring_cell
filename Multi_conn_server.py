@@ -50,6 +50,10 @@ def greet(conn, addr):
     greet_resp = conn.recv(msg_length).decode(FORMAT)
     print(f"Greet resp: {greet_resp} from {addr}")
     number = random.randint(1000, 99999)
+    for i in range(len(CLIENT_TRACKING)):
+        temp = CLIENT_TRACKING[i]
+        if temp[0][1] == greet_resp:
+            CLIENT_TRACKING.pop(i)
     CLIENT_TRACKING.append((number, greet_resp, conn))
     print(f"Conn# {number}")
     transfer(greet_resp, "complete")

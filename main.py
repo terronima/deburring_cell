@@ -67,3 +67,6 @@ print(arr_2)
 #     print(f"the map variable is {map}")
 # else:
 #     print(map)
+
+lis = [(1, 2, 3)]
+print(f'selected element: {lis[0][1]}')
