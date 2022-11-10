@@ -363,6 +363,7 @@ if GREET == 0:
 # request camera data
 if not int(camera_map):
     camera_map = send("r1,cam,r1_send_cam_data")
+    camera_map = camera_map.strip("ping")
 # modify camera data
 cntr = 0
 R_pallet_map = camera_map[0:9]
