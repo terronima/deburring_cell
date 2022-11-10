@@ -12,6 +12,8 @@ GREEN = 10
 RED = 11
 YELLOW = 12
 GREET = 0
+RIGHT_MOTOR = 13
+LEFT_MOTOR = 14
 # Global variables
 Global_standby = posj(-141.6, -0.31, 142.12, 2.05, 37.75, -141.84)
 
@@ -133,7 +135,6 @@ def greet():
     #     PAUSE = 0
 
 
-
 # Function to send message over socket
 def send(msg):
     message = msg.encode(FORMAT)
@@ -150,78 +151,16 @@ def send(msg):
 
 
 # pick function to pick both L & R Parts
-def pick(camera_map):
-    global PICK_MODE
-    global SIDE
+def pick(pos):
     # pallet_map = "100000001000000000"
-    pallet_map = camera_map
     # receives string of position from camera
-    tp_log(str(pallet_map))
-    R_pallet_map = pallet_map[0:9]
-    New_R_pallet_map = ""
-    j = 2
-    pallet_place = 0
+    tp_log(str(pos))
+    pallet_place = pos
     side_l = None
     side_j = None
     delta_x = None
     delta_y = None
     ref_c = None
-    for i in range(0, int(len(R_pallet_map))):
-        New_R_pallet_map += str(R_pallet_map[j])
-        j -= 1
-        if j == -1:
-            j = 5
-        elif j == 2:
-            j = 8
-    pallet_map = New_R_pallet_map + pallet_map[9::]
-    PICK_MODE = send("r1,HMI,PICK_MODE")
-    if PICK_MODE == "left_only":
-        SIDE = "L"
-        cntr = 9
-        for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
-            if pallet_map[i] == "1":
-                pallet_place = cntr
-                break
-            cntr += 1
-    elif PICK_MODE == "right_only":
-        SIDE = "R"
-        cntr = 0
-        for i in range(0, int(len(pallet_map[0:9]))):
-            if pallet_map[i] == "1":
-                pallet_place = cntr
-                break
-            cntr += 1
-    elif PICK_MODE == "intermittent":
-        cntr = 0
-        for i in range(0, int(len(pallet_map[0:9]))):
-            pick_el_1 = i
-            if pallet_map[pick_el_1] == "1":
-                SIDE = "R"
-                pallet_place = cntr
-                break
-                # string_of_picks += str(i) + ','
-            pick_el_2 = i + int(len(pallet_map) / 2)
-            if pallet_map[pick_el_2] == "1":
-                SIDE = "L"
-                pallet_place = cntr - 9
-                break
-            cntr += 1
-                # string_of_picks += str(pick_el_2) + ','
-    elif PICK_MODE == "side_by_side":
-        cntr = 0
-        for i in range(0, int(len(pallet_map[0:9]))):
-            if pallet_map[i] == "1":
-                SIDE = "R"
-                pallet_place = cntr
-                break
-            cntr += 1
-        if cntr > 8:
-            for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
-                if pallet_map[i] == "1":
-                    SIDE = "L"
-                    pallet_place = cntr
-                    break
-                cntr += 1
     # assign required parameters for pick process
     if SIDE == "L":  # if L then sets the picking position of L pallet
         ref_c = BR_L_PALLET_USR_CORD
@@ -276,10 +215,12 @@ def pick(camera_map):
 def deburr_L(*Faces, ref_c):
     global NEW_COORDINATE_SYS_FLAG
     global NEW_COORDINATE_SYS
+    set_digital_output(RIGHT_MOTOR, 0)
+    set_digital_output(LEFT_MOTOR, 1)
     for m in Faces:
         Face_points = []
         L_Face = []
-        #L_Face = m
+        # L_Face = m
         L_F_j_position = L_Face[0]
         L_F_centre_position = L_Face[1]
         movej(L_F_j_position, vel=jmove_vel, acc=safe_acc)
@@ -343,6 +284,8 @@ def deburr_L(*Faces, ref_c):
 def deburr_R(*Faces, ref_c):
     global NEW_COORDINATE_SYS_FLAG
     global NEW_COORDINATE_SYS
+    set_digital_output(RIGHT_MOTOR, 1)
+    set_digital_output(LEFT_MOTOR, 0)
     for m in Faces:
         Face_points = []
         R_Face = []
@@ -410,15 +353,84 @@ def handover():
         wait(1)
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
 
+
 # -----------------------------------------------------------------------------------------------
+# greet the server
 if GREET == 0:
     greet()
     GREET = 1
+# request camera data
 if not int(camera_map):
     camera_map = send("r1,cam,r1_send_cam_data")
-pick(camera_map)
+# modify camera data
+cntr = 0
+R_pallet_map = camera_map[0:9]
+pallet_map = camera_map
+New_R_pallet_map = ""
+j = 2
+for i in range(0, int(len(R_pallet_map))):
+    New_R_pallet_map += str(R_pallet_map[j])
+    j -= 1
+    if j == -1:
+        j = 5
+    elif j == 2:
+        j = 8
+pallet_map = New_R_pallet_map + pallet_map[9::]
+PICK_MODE = send("r1,HMI,PICK_MODE")
+if PICK_MODE == "left_only":
+    SIDE = "L"
+    cntr = 9
+    for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
+        if pallet_map[i] == "1":
+            pallet_place = cntr - 9
+            break
+        cntr += 1
+elif PICK_MODE == "right_only":
+    SIDE = "R"
+    cntr = 0
+    for i in range(0, int(len(pallet_map[0:9]))):
+        if pallet_map[i] == "1":
+            pallet_place = cntr
+            break
+        cntr += 1
+elif PICK_MODE == "intermittent":
+    cntr = 0
+    for i in range(0, int(len(pallet_map[0:9]))):
+        pick_el_1 = i
+        if pallet_map[pick_el_1] == "1":
+            SIDE = "R"
+            pallet_place = cntr
+            break
+            # string_of_picks += str(i) + ','
+        pick_el_2 = i + int(len(pallet_map) / 2)
+        if pallet_map[pick_el_2] == "1":
+            SIDE = "L"
+            pallet_place = cntr - 9
+            break
+        cntr += 1
+        # string_of_picks += str(pick_el_2) + ','
+elif PICK_MODE == "side_by_side":
+    cntr = 0
+    for i in range(0, int(len(pallet_map[0:9]))):
+        if pallet_map[i] == "1":
+            SIDE = "R"
+            pallet_place = cntr
+            break
+        cntr += 1
+    if cntr > 8:
+        for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
+            if pallet_map[i] == "1":
+                SIDE = "L"
+                pallet_place = cntr - 9
+                break
+            cntr += 1
+pick(cntr)
 if SIDE == "L":
     deburr_L()
 elif SIDE == "R":
     deburr_R()
 handover()
+if int(camera_map) == 0
+    set_digital_output(RIGHT_MOTOR, 0)
+    set_digital_output(LEFT_MOTOR, 0)
+camera_map = 0
