@@ -359,6 +359,7 @@ def handover():
 if GREET == 0:
     greet()
     GREET = 1
+
 # request camera data
 if not int(camera_map):
     camera_map = send("r1,cam,r1_send_cam_data")
