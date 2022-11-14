@@ -18,7 +18,7 @@ PORT = 12347
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "localhost"
-#SERVER = "192.168.1.10"
+# SERVER = "192.168.1.10"
 ADDR = (SERVER, PORT)
 RESPOND = "ready_to_transfer"
 
@@ -33,6 +33,7 @@ def reconnect():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     print("attempted...")
+
 
 class Ui_MainWindow(object):
     active = True
@@ -236,7 +237,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(12)
         self.label_29.setFont(font)
-        self.label_29.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_29.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_29.setObjectName("label_29")
         self.gridLayout_3.addWidget(self.label_29, 5, 3, 1, 3)
         self.largeRobRPart5 = QtWidgets.QCheckBox(self.groupBox_8)
@@ -273,7 +274,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(12)
         self.label_26.setFont(font)
-        self.label_26.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_26.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_26.setObjectName("label_26")
         self.gridLayout_3.addWidget(self.label_26, 3, 3, 1, 3)
         self.gridLayout.addWidget(self.groupBox_8, 0, 1, 1, 1)
@@ -638,7 +639,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(12)
         self.label_32.setFont(font)
-        self.label_32.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_32.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_32.setObjectName("label_32")
         self.gridLayout_4.addWidget(self.label_32, 3, 3, 1, 3)
         self.smallRobLPart7 = QtWidgets.QCheckBox(self.groupBox_7)
@@ -685,7 +686,6 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.menubar.addAction(self.menuFile.menuAction())
 
-
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -705,7 +705,6 @@ class Ui_MainWindow(object):
         self.PB_Reset_LR_Wheel.clicked.connect(self.reset_grind_wheel_l)
         self.PB_Pause_seq.clicked.connect(self.pause_seq)
         self.PB_Resume_seq.clicked.connect(self.resume_seq)
-
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -805,7 +804,6 @@ class Ui_MainWindow(object):
             except:
                 print(f"Exception captured")
                 reconnect()
-
 
     def camera_trig_button(self):
         print("Camera triggered")
@@ -943,8 +941,17 @@ class Ui_MainWindow(object):
         self.PrB_grWheel1LR.setValue(100)
         self.PrB_grWheel2LR.setValue(100)
 
+
+stylesheet = '''QMainWindow {
+        background-image: url("./logo.png"); 
+        background-repeat: no-repeat; 
+        background-position: center;
+    }'''
+
+
 # if __name__ == "__main__":
 app = QtWidgets.QApplication(sys.argv)
+app.setStyleSheet(stylesheet)
 MainWindow = QtWidgets.QMainWindow()
 ui = Ui_MainWindow()
 ui.setupUi(MainWindow)
@@ -953,4 +960,3 @@ t = QtCore.QTimer()
 t.singleShot(0, ui.status_updates)
 # starting the app
 sys.exit(app.exec_())
-

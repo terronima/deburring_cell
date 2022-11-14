@@ -54,6 +54,7 @@ def greet(conn, addr):
         temp = CLIENT_TRACKING[i][1]
         if temp == greet_resp:
             CLIENT_TRACKING.pop(i)
+            print(f"Current list: {CLIENT_TRACKING}")
     CLIENT_TRACKING.append((number, greet_resp, conn))
     print(f"Conn# {number}")
     transfer(greet_resp, "complete")

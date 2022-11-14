@@ -56,11 +56,9 @@ def send(msg, resp_req):
 # deburr sequence, move part to grinder, lightly touch the wheel, set new coord system, deburr the part (edge by edge)
 def deburr(pos, ref_c):
     F1_List = []
-    set_velx(200, 200)
-    set_accx(300)
+    set_velx(deburr_vel)
+    set_accx(safe_acc)
     movej(Global_deburr_safe)
-    L_F_j_position = pos[0]
-    L_F_centre_position = pos[1]
     # movej(Global_deburr_safe)
     movej(pos[0])  # joint move to pos above
     movel(pos[1])  # linear move to pos before creating local coord sys
@@ -120,6 +118,7 @@ def dip_part():
 
 # place sequence,take camera picture, find parts, transfer string with empty nest positions, place parton an empty nest
 def place():
+    global SIDE
     stiffness = [500, 500, 500, 1000, 1000, 1000]
     force_desired = 50.0  # set desired force
     f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]  # set force direction
