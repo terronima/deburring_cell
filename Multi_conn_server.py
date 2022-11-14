@@ -51,8 +51,8 @@ def greet(conn, addr):
     print(f"Greet resp: {greet_resp} from {addr}")
     number = random.randint(1000, 99999)
     for i in range(len(CLIENT_TRACKING)):
-        temp = CLIENT_TRACKING[i]
-        if temp[0][1] == greet_resp:
+        temp = CLIENT_TRACKING[i][1]
+        if temp == greet_resp:
             CLIENT_TRACKING.pop(i)
     CLIENT_TRACKING.append((number, greet_resp, conn))
     print(f"Conn# {number}")
