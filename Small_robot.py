@@ -10,7 +10,7 @@ ADDR = (HOST, PORT)
 CLIENT_NAME = "small"
 GREETING_SENT = False
 set_tool("no_part")
-SIDE = "R"
+SIDE = ""
 F1_USR_CORD = 101
 SURFACE_1 = [Global_sur_1_j_cent, Global_sur_1_cent, Global_sur_1_p1, Global_sur_1_p2, Global_sur_1_p3, Global_sur_1_p4,
              Global_sur_1_p5, Global_sur_1_p6, Global_sur_1_p7]
@@ -22,10 +22,12 @@ SURFACE_4 = [Global_sur_4_j_cent, Global_sur_4_cent, Global_sur_4_p1, Global_sur
              Global_sur_4_p5]
 SURFACE_5 = [Global_sur_5_j_cent, Global_sur_5_cent, Global_sur_5_p1, Global_sur_5_p2, Global_sur_5_p3]
 SURFACE_6 = [Global_sur_6_j_cent, Global_sur_6_cent, Global_sur_6_p1, Global_sur_6_p2, Global_sur_6_p3]
+L_PART = [SURFACE_1, SURFACE_2, SURFACE_3, SURFACE_4, SURFACE_5, SURFACE_6]
 deburr_vel = [200, 200]
 safe_acc = [300, 300]
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
+
 
 # greet function, which will introduce robot to the server.
 def greet():
@@ -38,6 +40,7 @@ def greet():
                 send(data, 1)
                 tp_log("Sent: " + data)
                 break
+
 
 # send message to the destination through the server
 def send(msg, resp_req):
@@ -52,6 +55,7 @@ def send(msg, resp_req):
         if data != "ping":
             tp_log(str(data))
             return (data)
+
 
 # deburr sequence, move part to grinder, lightly touch the wheel, set new coord system, deburr the part (edge by edge)
 def deburr(pos, ref_c):
@@ -96,6 +100,7 @@ def deburr(pos, ref_c):
     release_force
     # release_compliance_ctrl()                                                  #remove force from the axis
     set_ref_coord(DR_BASE)
+
 
 # dip part into the water tank, and lift under the air blade to blowout water
 def dip_part():
@@ -171,6 +176,7 @@ def place():
     release_force()
     release_compliance_ctrl()
 
+
 # get part from big robot, acknowledge transfer and side.
 def pick():
     global SIDE
@@ -201,12 +207,19 @@ def pick():
     release_compliance_ctrl()
     movel(Global_safe)
 
-#----------------------------------------------------------------
+
+'''----------------------------------------------------------------'''
 
 if not GREETING_SENT:
     greet()
     GREETING_SENT = 1
-pick()
-deburr()
-dip_part()
-place()
+while True:
+    pick()
+    if SIDE == "L":
+        for surface in L_PART:
+            deburr(surface, ref_c=F1_USR_CORD)
+    # elif SIDE == "R":
+    #     for surface in R_PART:
+    #         deburr(surface, ref_c=F2_USR_CORD)
+    dip_part()
+    place()
