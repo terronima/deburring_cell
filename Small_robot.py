@@ -1,6 +1,4 @@
 import socket
-import sys
-import threading
 
 HOST = "192.168.1.10"  # The server's hostname or IP address
 PORT = 12347  # The port used by the server
@@ -59,46 +57,41 @@ def send(msg, resp_req):
 
 # deburr sequence, move part to grinder, lightly touch the wheel, set new coord system, deburr the part (edge by edge)
 def deburr(pos, ref_c):
-    F1_List = []
-    set_velx(deburr_vel)
-    set_accx(safe_acc)
-    movej(Global_deburr_safe)
-    # movej(Global_deburr_safe)
-    movej(pos[0])  # joint move to pos above
-    movel(pos[1])  # linear move to pos before creating local coord sys
-    set_ref_coord(ref_c)
     k_d1 = [1500.0, 1500.0, 1500.0, 1000.0, 1000.0, 1000.0]  # set compliance stiffness
-    task_compliance_ctrl(k_d1)
     force_desired = 10  # set desired force
     f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]  # set force direction
     f_dir = [0, 0, 1, 0, 0, 0]
+    set_velx(deburr_vel)
+    set_accx(safe_acc)
+    F1_List = []
+    movej(Global_deburr_safe)
+    movej(pos[0])  # joint move to pos above
+    movel(pos[1])  # linear move to pos before creating local coord sys
+    set_ref_coord(ref_c)
+    task_compliance_ctrl(k_d1)
     set_desired_force(f_d, f_dir)
-    while (1):  # loop to check that force is achieved
+    while True:  # loop to check that force is achieved
         force_condition = check_force_condition(DR_AXIS_Z, max=force_desired)
         if force_condition == 1:
             break
+    # release compliance control
     release_compliance_ctrl()
+    # remove force from the axis
+    release_force()
     new_centre_position = get_current_posx()  # ref = L_F1_USR_CORD)
     new_centre_position = new_centre_position[0]
     L_F1_NEW_USR_CORD = set_user_cart_coord(new_centre_position, ref=DR_BASE)
     tp_log(str(L_F1_NEW_USR_CORD))
+    # set ref coord sys for deburr process
     set_ref_coord(L_F1_NEW_USR_CORD)
-    for i in range(2, len(pos) - 1):
+    for i in range(2, len(pos)):
         F1_List.append(coord_transform(pos[i], DR_BASE, L_F1_NEW_USR_CORD))
     movesx(F1_List, vel=deburr_vel, acc=safe_acc)
     tp_log("movesx_complete")
     above_pos = trans(F1_List[len(F1_List) - 1], [0, 100, 0, 0, 0, 0], ref=DR_BASE)
     tp_log(str(above_pos))
     movel(above_pos)
-    # l_F1_point1_above = trans(L_F1_point1,[0,0,-100,0,0,0], DR_TOOL)
-    # movel(l_F1_point1_above)
-    # movel(L_F1_point1)
-    # k_d2 = [100.0, 100.0, 50.0, 100.0, 100.0, 100.0]   #set compliance stiffness
-    # task_compliance_ctrl(k_d2)
-    # movel(L_F1_point2)
-    wait(0.5)
-    release_force
-    # release_compliance_ctrl()                                                  #remove force from the axis
+    # reset ref coord sys
     set_ref_coord(DR_BASE)
 
 
@@ -124,12 +117,15 @@ def dip_part():
 # place sequence,take camera picture, find parts, transfer string with empty nest positions, place parton an empty nest
 def place():
     global SIDE
+    place_speed = 25
     stiffness = [500, 500, 500, 1000, 1000, 1000]
     force_desired = 50.0  # set desired force
     f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]  # set force direction
     f_dir = [0, 0, 1, 0, 0, 0]  # set axis at which force would be applied (x, y, z, a, b, c)
     pallet_map = send("r2,cam,r2_send_cam_data", 1)
     tp_log(str(pallet_map))
+    set_velx(225, 225)
+    set_accx(300, 300)
     cntr = 0
     pallet_place = 0
     side_l = 0
@@ -162,11 +158,9 @@ def place():
     place_above = coord_transform(place_above, ref_c, DR_BASE)
     place = coord_transform(place, ref_c, DR_BASE)
     movej(Global_safe)
-    set_velx(225, 225)
-    set_accx(300, 300)
     movej(side_j)
     movel(place_above)
-    movel(place, vel=25)
+    movel(place, vel=place_speed)
     task_compliance_ctrl(stiffness)
     set_desired_force(f_d, f_dir)
     wait(2)
@@ -180,6 +174,7 @@ def place():
 # get part from big robot, acknowledge transfer and side.
 def pick():
     global SIDE
+    handover_speed = 35
     stiffness = [500, 500, 500, 100, 100, 100]
     Handover_above = trans(Global_handover, [0, -100, 0, 0, 0, 0], DR_BASE)
     force_desired = 30.0  # set desired force
@@ -193,7 +188,7 @@ def pick():
     SIDE = send("r2,r1,side", 1)
     data = send("r2,r1,ready", 1)
     if data == "ready":
-        movel(Global_handover, vel=35)
+        movel(Global_handover, vel=handover_speed)
         task_compliance_ctrl(stiffness)
         set_desired_force(f_d, f_dir)
         wait(2)
