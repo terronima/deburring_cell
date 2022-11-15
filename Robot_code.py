@@ -20,19 +20,21 @@ Global_standby = posj(-141.6, -0.31, 142.12, 2.05, 37.75, -141.84)
 # Global_Pick_L_j = posj(-138.03, 48.20, 91.53, 0.59, 38.24, -137.18)
 
 # Velocity and Acceleration
-deburr_vel = 50
+deburr_vel = 200
 jmove_vel = 80
-intermediate_jmove_vel = 175
-lmove_vel = 250
-convergence_vel = 100
-safe_acc = 200
-deburr_acc = 50
+intermediate_jmove_vel = 80
+lmove_vel = 500
+convergence_vel = 300
+safe_acc = 400
+deburr_acc = 250
 set_tool("right part")
-SIDE = "R"
+SIDE = ""
 camera_map = ""
 
 # ONLY_LEFT = 1, ONLY_RIGHT = 2, INTERMITTENT = 3, SIDE_BY_SIDE = 4
 PICK_MODE = ""
+
+#global pallet_place
 
 # List of point for L Part faces
 L_F1 = [Global_L_F1_centre_j, Global_L_F1_centre, Global_L_F1_P1, Global_L_F1_P2, Global_L_F1_P3, Global_L_F1_P4,
@@ -107,6 +109,19 @@ GREETING_SENT = False
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
+def send(msg):
+    message = msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * ((HEADER) - len(send_length))
+    client.send(send_length)
+    client.send(message)
+    while True:
+        data = client.recv(64).decode(FORMAT)
+        data.strip("z")
+        if data != "z":
+            #tp_log(str(data))
+            return (data)
 
 def greet():
     global SIDE
@@ -125,37 +140,14 @@ def greet():
         if received == "name":
             data = "r1"
             send(data)
-            break
-        # tp_log("Sent: " + data)
-    # elif received == "side_by_side" or received == "intermittent" or received == "left_only" or received == "right_only":
-    #     PICK_MODE = received
-    # elif received == "paused":
-    #     PAUSE = 1
-    # elif received == "continue":
-    #     PAUSE = 0
-
-
-# Function to send message over socket
-def send(msg):
-    message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * ((HEADER) - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    while True:
-        data = client.recv(1024).decode(FORMAT)
-        if data != "ping":
-            tp_log(str(data))
-            return (data)
-
+            break    
 
 # pick function to pick both L & R Parts
 def pick(pos):
     # pallet_map = "100000001000000000"
     # receives string of position from camera
     tp_log(str(pos))
-    pallet_place = pos
+    pallet_place = int(pos)    
     side_l = None
     side_j = None
     delta_x = None
@@ -174,6 +166,9 @@ def pick(pos):
         side_j = Global_pick_R_j
         delta_x = 160 * (pallet_place // 3)
         delta_y = -140 * (pallet_place % 3)
+    tp_log("SIDE is " + str(SIDE))
+    tp_log("delta_x  = " + str(delta_x))
+    tp_log("delta_y   = " + str(delta_y ))
     delta_val_above = trans(side_l, [delta_x, delta_y, 100, 0, 0, 0])
     delta_val = trans(side_l, [delta_x, delta_y, 0, 0, 0, 0])
     pick_pos_above = coord_transform(delta_val_above, ref_c, DR_BASE)
@@ -220,7 +215,7 @@ def deburr_L(*Faces, ref_c):
     for m in Faces:
         Face_points = []
         L_Face = []
-        # L_Face = m
+        L_Face = m
         L_F_j_position = L_Face[0]
         L_F_centre_position = L_Face[1]
         movej(L_F_j_position, vel=jmove_vel, acc=safe_acc)
@@ -353,86 +348,57 @@ def handover():
         wait(1)
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
 
-
-# -----------------------------------------------------------------------------------------------
-# greet the server
-if GREET == 0:
-    greet()
-    GREET = 1
-
-# request camera data
-if not int(camera_map):
-    camera_map = send("r1,cam,r1_send_cam_data")
-    camera_map = camera_map.strip("ping")
-# modify camera data
-cntr = 0
-R_pallet_map = camera_map[0:9]
-pallet_map = camera_map
-New_R_pallet_map = ""
-j = 2
-for i in range(0, int(len(R_pallet_map))):
-    New_R_pallet_map += str(R_pallet_map[j])
-    j -= 1
-    if j == -1:
-        j = 5
-    elif j == 2:
-        j = 8
-pallet_map = New_R_pallet_map + pallet_map[9::]
-PICK_MODE = send("r1,HMI,PICK_MODE")
-if PICK_MODE == "left_only":
+def left_only_MODE(pallet_map):
+    global SIDE
     SIDE = "L"
-    cntr = 9
     for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
-        if pallet_map[i] == "1":
+        if pallet_map[i] == 1:
             pallet_place = cntr - 9
-            break
+            return pallet_place
         cntr += 1
-elif PICK_MODE == "right_only":
+            
+
+def right_only_MODE(pallet_map):
+    global SIDE
     SIDE = "R"
     cntr = 0
     for i in range(0, int(len(pallet_map[0:9]))):
-        if pallet_map[i] == "1":
+        if pallet_map[i] == 1:
             pallet_place = cntr
-            break
+            return pallet_place
         cntr += 1
-elif PICK_MODE == "intermittent":
+
+def intermittent_MODE(pallet_map):
+    global SIDE
     cntr = 0
     for i in range(0, int(len(pallet_map[0:9]))):
         pick_el_1 = i
-        if pallet_map[pick_el_1] == "1":
+        if pallet_map[pick_el_1] == 1:
             SIDE = "R"
             pallet_place = cntr
-            break
+            return pallet_place
             # string_of_picks += str(i) + ','
         pick_el_2 = i + int(len(pallet_map) / 2)
-        if pallet_map[pick_el_2] == "1":
+        if pallet_map[pick_el_2] == 1:
             SIDE = "L"
             pallet_place = cntr - 9
-            break
+            return pallet_place
         cntr += 1
-        # string_of_picks += str(pick_el_2) + ','
-elif PICK_MODE == "side_by_side":
+            # string_of_picks += str(pick_el_2) + ','
+
+def side_by_side_MODE(pallet_map):
+    global SIDE
     cntr = 0
     for i in range(0, int(len(pallet_map[0:9]))):
-        if pallet_map[i] == "1":
+        if pallet_map[i] == 1:
             SIDE = "R"
             pallet_place = cntr
-            break
+            return pallet_place
         cntr += 1
-    if cntr > 8:
-        for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
-            if pallet_map[i] == "1":
-                SIDE = "L"
-                pallet_place = cntr - 9
-                break
-            cntr += 1
-pick(cntr)
-if SIDE == "L":
-    deburr_L()
-elif SIDE == "R":
-    deburr_R()
-handover()
-if int(camera_map) == 0
-    set_digital_output(RIGHT_MOTOR, 0)
-    set_digital_output(LEFT_MOTOR, 0)
-camera_map = 0
+        if cntr >= 8:
+            for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
+                if pallet_map[i] == 1:
+                    SIDE = "L"
+                    pallet_place = cntr - 9
+                    return pallet_place
+                cntr += 1
