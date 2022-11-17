@@ -404,7 +404,7 @@ def side_by_side_MODE(pallet_map):
                 cntr += 1
                 
                 
-    -----------------MAIN-------------------
+    -----------------Robot MAIN-------------------
 
 pallet_place = None
 camera_map = 0
