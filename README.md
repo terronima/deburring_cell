@@ -1,2 +1,2 @@
-# deburring_cell
-doosan
+Collaborative Deburr cell Project
+
