@@ -946,8 +946,7 @@ class Ui_MainWindow(object):
 
 
 stylesheet = '''QMainWindow {
-        background-image: url("./logo.png"); 
-        background-repeat: no-repeat; 
+        background-image: url("./logo.png");  
         background-position: center;} 
         QLabel { color : white; }
         QCheckBox { color : white; }

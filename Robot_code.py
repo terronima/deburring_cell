@@ -283,7 +283,6 @@ def deburr_R(*Faces, ref_c):
     set_digital_output(LEFT_MOTOR, 0)
     for m in Faces:
         Face_points = []
-        R_Face = []
         R_Face = m
         R_F_j_position = R_Face[0]
         R_F_centre_position = R_Face[1]
@@ -404,7 +403,7 @@ def side_by_side_MODE(pallet_map):
                 cntr += 1
                 
                 
-    -----------------MAIN-------------------
+ #   -----------------MAIN-------------------
 
 pallet_place = None
 camera_map = 0
