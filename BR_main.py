@@ -18,9 +18,13 @@ if GREET == 0:
 #         time.sleep(1)
 #     else:
 #         # request camera map
-#         camera_map = send("r1,cam,r1_send_cam_data")
+#         while True:
+#             camera_map = send("r1,cam,r1_send_cam_data", 1)
+#             camera_map = camera_map.strip("z")
+#             if len(camera_map) == 18:
+#                 break
 #         tp_log("Original_camera_map before" + str(camera_map))
-#         camera_map = camera_map.strip("z")
+        
 #         tp_log("Original_camera_map " + str(camera_map))
 
 #         # modify Right pallet data in camera map   
@@ -40,7 +44,7 @@ if GREET == 0:
 #         for i in pallet_map_str:
 #             pallet_map.append(int(i))
 #         tp_log("updated_pallet_map " + str(pallet_map))
-#         PICK_MODE = send("r1,HMI,PICK_MODE")   
+#         PICK_MODE = send("r1,HMI,PICK_MODE", 1)   
 #         PICK_MODE = PICK_MODE.strip("z") 
 #         tp_log("Pick mode:" + PICK_MODE) 
 #         while True:       
@@ -61,14 +65,14 @@ if GREET == 0:
 #             pick(pick_pos)
 
 #             if SIDE == "L":
-#                set_digital_output(LEFT_MOTOR, 1)
+#                 #set_digital_output(LEFT_MOTOR, 1)
 #                 deburr_L(L_F1, L_F2, L_F3, L_F5, L_F7, L_F8_2, ref_c = DR_BASE)
 #                 deburr_L(L_F6, L_F4, L_F7_2, L_F8, ref_c = DR_BASE)
 #             elif SIDE == "R":
-#                 set_digital_output(RIGHT_MOTOR, 1)
+#                 #set_digital_output(RIGHT_MOTOR, 1)
 #                 deburr_R(R_F1, R_F2, R_F3, R_F5, R_F7, ref_c = DR_BASE)
 #                 deburr_R(R_F6, R_F4, R_F8, ref_c = DR_BASE)
-
+                
 #             if PICK_MODE == "left_only":
 #                 L_pallet_sum = 0
 #                 for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
@@ -102,9 +106,6 @@ if GREET == 0:
 #                         L_pallet_sum += i
 #                     if L_pallet_sum == 0:
 #                         set_digital_output(LEFT_MOTOR, 0)
-
-
-
 handover()
     #         set_digital_output(7, 1)
             

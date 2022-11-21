@@ -105,6 +105,7 @@ def deburr_L(*Faces, ref_c):
     global NEW_COORDINATE_SYS_FLAG
     global NEW_COORDINATE_SYS
     set_digital_output(DEBURR_MOTOR,START)
+    tp_log("deburr L: " + str(SIDE))
     for m in Faces:
         Face_points = []
         L_Face = []
@@ -112,7 +113,6 @@ def deburr_L(*Faces, ref_c):
         L_F_j_position = L_Face[0]
         L_F_centre_position = L_Face[1]
         movej(L_F_j_position, vel=jmove_vel, acc=safe_acc)
-        #NEW_COORDINATE_SYS_FLAG = 1
         if not NEW_COORDINATE_SYS_FLAG:
             # movej(Global_L_safe)
             movel(L_F_centre_position, vel=lmove_vel, acc=safe_acc)
@@ -143,6 +143,8 @@ def deburr_L(*Faces, ref_c):
                 Face_points.append(L_Face_point)
             movesx(Face_points)
             L_Face.pop()
+            backoff_pos = coord_transform(L_Face[len(L_Face) - 1], DR_BASE, NEW_COORDINATE_SYS)
+            movel(backoff_pos, vel=lmove_vel, acc=safe_acc, ref=NEW_COORDINATE_SYS)
         else:
             for i in range(1, len(L_Face) - 1):
                 L_Face_point = coord_transform(L_Face[i], DR_BASE, NEW_COORDINATE_SYS)
@@ -160,7 +162,8 @@ def deburr_L(*Faces, ref_c):
 def deburr_R(*Faces, ref_c):
     global NEW_COORDINATE_SYS_FLAG
     global NEW_COORDINATE_SYS
-    #set_digital_output(DEBURR_MOTOR, START)
+    set_digital_output(DEBURR_MOTOR, START)
+    tp_log("deburr R: " + str(SIDE))
     for m in Faces:
         Face_points = []
         R_Face = []
@@ -229,17 +232,22 @@ def dip_part():
 
 def place():
     global SIDE
+    pallet_map = None
     place_speed = 25
     stiffness = [500, 500, 500, 1000, 1000, 1000]
     force_desired = 50.0  # set desired force
     f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]  # set force direction
     f_dir = [0, 0, 1, 0, 0, 0]  # set axis at which force would be applied (x, y, z, a, b, c)
-    pallet_map = send("r2,cam,r2_send_cam_data", 1)
+    while True:
+        pallet_map = send("r2,cam,r2_send_cam_data", 1)
+        if (len(pallet_map)) == 18:
+            break
+        time.sleep(0.5)
     set_velx(225, 225)
     set_accx(300, 300)
     tp_log(str(pallet_map))
     cntr = 0
-    pallet_place = 0
+    pallet_place = None
     side_l = 0
     side_j = 0
     ref_c = 0
@@ -254,6 +262,7 @@ def place():
     for i in pallet_map:
         if SIDE == "R" and cntr < len(pallet_map) // 2:
             p = int(i)
+            tp_log("p is: " + str(p) + ", cntr is" + str(cntr))
             if p == 0:
                 pallet_place = cntr 
                 break
@@ -288,6 +297,7 @@ def place():
 # get part from big robot, acknowledge transfer and side.
 def receive_part():
     global SIDE
+    side = ""
     in_data = ""
     handover_speed = 35
     stiffness = [500, 500, 500, 100, 100, 100]
@@ -307,9 +317,10 @@ def receive_part():
             send("r2,r1,side", 0)
             break
     while True:
-        SIDE = send("", 2)
+        side = send("", 2)
+        tp_log("received side from BR: " + str(side))
         #tp_popup("SIDE: "+SIDE, DR_PM_MESSAGE)
-        if SIDE == "L" or "R":
+        if side == "L" or side == "R":            
             send("r2,r1,ready", 0)
             break
     while True:
@@ -317,27 +328,30 @@ def receive_part():
         #tp_popup("ready_confirm: "+ready_confirm, DR_PM_MESSAGE)
         if ready_confirm == "okay":
             #tp_popup("moving closer", DR_PM_MESSAGE)
-            set_ref_coord(DR_BASE)
-            movel(Global_handover_l, vel=handover_speed)
-            task_compliance_ctrl(stiffness)
-            set_desired_force(f_d, f_dir)
-            #while (1):
-            #    force_condition = check_force_condition(DR_AXIS_X, max=force_desired)
-            #    if force_condition == 1:
-            #        break
-            wait(2)
-            set_digital_output(6, 0)
-            wait(0.5)
-            send("r2,r1,secured", 0)
             break
-        while True:
-            part_status = send("", 2)
-            #tp_popup("part_status: "+part_status, DR_PM_MESSAGE)
-            if part_status == "part_released":                
-                break
-        send("r2,r1,done", 0)
+    set_ref_coord(DR_BASE)
+    movel(Global_handover_l, vel=handover_speed)
+    task_compliance_ctrl(stiffness)
+    set_desired_force(f_d, f_dir)
+    #while (1):
+    #    force_condition = check_force_condition(DR_AXIS_X, max=force_desired)
+    #    if force_condition == 1:
+    #        break
+    wait(2)
+    set_digital_output(6, 0)
+    wait(0.5)
+    send("r2,r1,secured", 0)
+    # break
+    while True:
+        part_status = send("", 2)
+        #tp_popup("part_status: "+part_status, DR_PM_MESSAGE)
+        if part_status == "part_released":         
+            send("r2,r1,done", 0)
+            break
     release_force()
     release_compliance_ctrl()
     movej(Global_handover_j)
     wait(1)
     movej(Global_SR_HOME_j)
+    SIDE = side
+    tp_log("global SIDE:" + str(SIDE))

@@ -109,7 +109,7 @@ GREETING_SENT = False
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
-def send(msg, resp_req): #0 - send no lsten, 1 send and lsten, 2 - no send only lsten
+def send(msg, resp_req): #0 - send no lsten, 1 send and lsten, 2 - no send only lsten    
     if resp_req != 2:
         message = msg.encode(FORMAT)
         msg_length = len(message)
@@ -119,9 +119,24 @@ def send(msg, resp_req): #0 - send no lsten, 1 send and lsten, 2 - no send only 
         client.send(message)
     while resp_req != 0:
         data = client.recv(64).decode(FORMAT) 
-        data = data.strip("z")       
+        data = data.strip("z") 
         if data != "z":
             data = data.strip("z")
+            #tp_log(str(data))
+            return (data)
+
+def send_camera_map(msg):
+    data = ""
+    message = msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * ((HEADER) - len(send_length))
+    client.send(send_length)
+    client.send(message)
+    while True:
+        data = client.recv(64).decode(FORMAT)
+        data.strip("z")
+        if data != "z":
             #tp_log(str(data))
             return (data)
 
@@ -194,7 +209,7 @@ def pick(pos):
         force_condition = check_force_condition(DR_AXIS_Z, max=force_check)
         if get_digital_input(11) == 0:
             break
-    wait(1)
+    wait(2)
     release_force()
     release_compliance_ctrl()
     set_digital_output(AIRBLOW_OUTPUT, 0)
@@ -279,8 +294,8 @@ def deburr_L(*Faces, ref_c):
 def deburr_R(*Faces, ref_c):
     global NEW_COORDINATE_SYS_FLAG
     global NEW_COORDINATE_SYS
-    set_digital_output(RIGHT_MOTOR, 1)
-    set_digital_output(LEFT_MOTOR, 0)
+    #set_digital_output(RIGHT_MOTOR, 1)
+    #set_digital_output(LEFT_MOTOR, 0)
     for m in Faces:
         Face_points = []
         R_Face = []
@@ -337,9 +352,8 @@ def deburr_R(*Faces, ref_c):
 def handover():
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
     movej(Global_handover_j, vel=jmove_vel, acc=safe_acc)
-    data = send("r1,r2,wake", 0)
     while True:
-        in_data = send("", 2)
+        in_data = send("r1,r2,wake", 1)
         #tp_popup("in_data: "+in_data, DR_PM_MESSAGE)
         if in_data == "side":
             send(str("r1,r2," +SIDE), 0)
