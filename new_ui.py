@@ -291,7 +291,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.LR_right_part_ctr.setFont(font)
         self.LR_right_part_ctr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.LR_right_part_ctr.setText("")
+        self.LR_right_part_ctr.setText("0")
         self.LR_right_part_ctr.setAlignment(QtCore.Qt.AlignCenter)
         self.LR_right_part_ctr.setObjectName("LR_right_part_ctr")
         self.gridLayout_2.addWidget(self.LR_right_part_ctr, 8, 1, 1, 2)
@@ -307,7 +307,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.SR_right_part_ctr.setFont(font)
         self.SR_right_part_ctr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.SR_right_part_ctr.setText("")
+        self.SR_right_part_ctr.setText("0")
         self.SR_right_part_ctr.setAlignment(QtCore.Qt.AlignCenter)
         self.SR_right_part_ctr.setObjectName("SR_right_part_ctr")
         self.gridLayout_2.addWidget(self.SR_right_part_ctr, 8, 3, 1, 1)
@@ -348,7 +348,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.SR_left_part_tmr.setFont(font)
         self.SR_left_part_tmr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.SR_left_part_tmr.setText("")
+        self.SR_left_part_tmr.setText("0")
         self.SR_left_part_tmr.setAlignment(QtCore.Qt.AlignCenter)
         self.SR_left_part_tmr.setObjectName("SR_left_part_tmr")
         self.gridLayout_2.addWidget(self.SR_left_part_tmr, 3, 3, 1, 1)
@@ -369,7 +369,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.LR_right_part_tmr.setFont(font)
         self.LR_right_part_tmr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.LR_right_part_tmr.setText("")
+        self.LR_right_part_tmr.setText("0")
         self.LR_right_part_tmr.setAlignment(QtCore.Qt.AlignCenter)
         self.LR_right_part_tmr.setObjectName("LR_right_part_tmr")
         self.gridLayout_2.addWidget(self.LR_right_part_tmr, 4, 1, 1, 2)
@@ -385,7 +385,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.LR_left_part_tmr.setFont(font)
         self.LR_left_part_tmr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.LR_left_part_tmr.setText("")
+        self.LR_left_part_tmr.setText("0")
         self.LR_left_part_tmr.setAlignment(QtCore.Qt.AlignCenter)
         self.LR_left_part_tmr.setObjectName("LR_left_part_tmr")
         self.gridLayout_2.addWidget(self.LR_left_part_tmr, 3, 1, 1, 2)
@@ -425,7 +425,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.SR_left_part_ctr.setFont(font)
         self.SR_left_part_ctr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.SR_left_part_ctr.setText("")
+        self.SR_left_part_ctr.setText("0")
         self.SR_left_part_ctr.setAlignment(QtCore.Qt.AlignCenter)
         self.SR_left_part_ctr.setObjectName("SR_left_part_ctr")
         self.gridLayout_2.addWidget(self.SR_left_part_ctr, 7, 3, 1, 1)
@@ -454,7 +454,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.SR_right_part_tmr.setFont(font)
         self.SR_right_part_tmr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.SR_right_part_tmr.setText("")
+        self.SR_right_part_tmr.setText("0")
         self.SR_right_part_tmr.setAlignment(QtCore.Qt.AlignCenter)
         self.SR_right_part_tmr.setObjectName("SR_right_part_tmr")
         self.gridLayout_2.addWidget(self.SR_right_part_tmr, 4, 3, 1, 1)
@@ -463,7 +463,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.LR_left_part_ctr.setFont(font)
         self.LR_left_part_ctr.setFrameShape(QtWidgets.QFrame.Panel)
-        self.LR_left_part_ctr.setText("")
+        self.LR_left_part_ctr.setText("0")
         self.LR_left_part_ctr.setAlignment(QtCore.Qt.AlignCenter)
         self.LR_left_part_ctr.setObjectName("LR_left_part_ctr")
         self.gridLayout_2.addWidget(self.LR_left_part_ctr, 7, 1, 1, 2)
@@ -819,6 +819,7 @@ class Ui_MainWindow(object):
     def status_updates(self):
         cntr = 0
         recv = ""
+        self.read_from_file()
         while True:
             QCoreApplication.processEvents()
             try:
@@ -865,6 +866,7 @@ class Ui_MainWindow(object):
                         data = int(recv[3::])
                         self.sr_l_part_cnt = data
                     self.display_sr_wheel_stat()
+                self.write_to_file()
             if recv[0] == "t":
                 if recv[1] == "b":
                     if recv[2] == "r":
@@ -906,6 +908,25 @@ class Ui_MainWindow(object):
                 self.LR_Fault_Stat.setStyleSheet("background-color: red")
             time.sleep(0.1)
 
+    def write_to_file(self):
+        string = f'''Big robot right parts produced: {self.LR_left_part_ctr.text()} 
+Big robot left parts produced: {self.LR_right_part_ctr.text()} 
+Small robot right parts produced: {self.SR_left_part_ctr.text()} 
+Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
+        with open("test.txt", "w") as f:
+            f.write(string)
+        print(string)
+
+    def read_from_file(self):
+        with open("test.txt", "r") as f:
+            read_data = f.read().replace("\n", " ")
+            text = read_data.split(" ")
+        self.LR_right_part_ctr.setText(text[5])
+        self.LR_left_part_ctr.setText(text[11])
+        self.SR_right_part_ctr.setText(text[17])
+        self.SR_left_part_ctr.setText(text[23])
+        print(str(read_data))
+
     def trig_camera(self, cam_data):
         ctr1 = 0
         ctr2 = 0
@@ -946,14 +967,12 @@ class Ui_MainWindow(object):
 
 
 stylesheet = '''QMainWindow {
-        background-image: url("./logo.png"); 
-        background-repeat: no-repeat; 
+        background-image: url("./logo.png");         
         background-position: center;} 
         QLabel { color : white; }
         QCheckBox { color : white; }
         QRadioButton { color : white; }
     '''
-
 
 # if __name__ == "__main__":
 app = QtWidgets.QApplication(sys.argv)

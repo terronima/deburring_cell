@@ -1,0 +1,4 @@
+Big robot right parts produced: 3
+Big robot left parts produced: 1
+Small robot right parts produced: 4
+Small robot left parts produced: 15
