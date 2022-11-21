@@ -357,6 +357,7 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.RB_Intermittent.setFont(font)
         self.RB_Intermittent.setObjectName("RB_Intermittent")
+        self.RB_Intermittent.setChecked(True)
         self.gridLayout_2.addWidget(self.RB_Intermittent, 10, 0, 1, 2)
         self.label_11 = QtWidgets.QLabel(self.groupBox_5)
         font = QtGui.QFont()
@@ -474,7 +475,7 @@ class Ui_MainWindow(object):
         self.RB_One_side.setAcceptDrops(False)
         self.RB_One_side.setAutoFillBackground(False)
         self.RB_One_side.setIconSize(QtCore.QSize(30, 30))
-        self.RB_One_side.setChecked(True)
+        self.RB_One_side.setChecked(False)
         self.RB_One_side.setObjectName("RB_One_side")
         self.gridLayout_2.addWidget(self.RB_One_side, 9, 0, 1, 2)
         self.gridLayout.addWidget(self.groupBox_5, 0, 2, 1, 1)
@@ -820,6 +821,8 @@ class Ui_MainWindow(object):
         cntr = 0
         recv = ""
         self.read_from_file()
+        self.display_lr_wheel_stat()
+        self.display_sr_wheel_stat()
         while True:
             QCoreApplication.processEvents()
             try:
@@ -849,23 +852,15 @@ class Ui_MainWindow(object):
                 if recv[1] == "b":
                     if recv[2] == "r":
                         self.LR_left_part_ctr.setText(f"{recv[3::]}")
-                        data = int(recv[3::])
-                        self.lr_r_part_cnt = data
                     elif recv[2] == "l":
                         self.LR_right_part_ctr.setText(f"{recv[3::]}")
-                        data = int(recv[3::])
-                        self.lr_l_part_cnt = data
-                    self.display_lr_wheel_stat()
                 elif recv[1] == "s":
                     if recv[2] == "r":
                         self.SR_left_part_ctr.setText(f"{recv[3::]}")
-                        data = int(recv[3::])
-                        self.sr_r_part_cnt = data
                     elif recv[2] == "l":
                         self.SR_right_part_ctr.setText(f"{recv[3::]}")
-                        data = int(recv[3::])
-                        self.sr_l_part_cnt = data
-                    self.display_sr_wheel_stat()
+                self.display_sr_wheel_stat()
+                self.display_lr_wheel_stat()
                 self.write_to_file()
             if recv[0] == "t":
                 if recv[1] == "b":
@@ -913,19 +908,18 @@ class Ui_MainWindow(object):
 Big robot left parts produced: {self.LR_right_part_ctr.text()} 
 Small robot right parts produced: {self.SR_left_part_ctr.text()} 
 Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
-        with open("test.txt", "w") as f:
+        with open("logs.txt", "w") as f:
             f.write(string)
-        print(string)
 
     def read_from_file(self):
-        with open("test.txt", "r") as f:
-            read_data = f.read().replace("\n", " ")
+        text = []
+        with open("logs.txt", "r") as f:
+            read_data = f.read().replace("\n", "")
             text = read_data.split(" ")
         self.LR_right_part_ctr.setText(text[5])
         self.LR_left_part_ctr.setText(text[11])
         self.SR_right_part_ctr.setText(text[17])
         self.SR_left_part_ctr.setText(text[23])
-        print(str(read_data))
 
     def trig_camera(self, cam_data):
         ctr1 = 0
@@ -949,21 +943,27 @@ Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
             ctr2 += 1
 
     def display_lr_wheel_stat(self):
-        wheel_deterioration_lr_l = 100 - self.lr_l_part_cnt * 0.01
-        wheel_deterioration_lr_r = 100 - self.lr_r_part_cnt * 0.01
+        wheel_deterioration_lr_l = 100 - int(self.LR_left_part_ctr.text()) * 0.01
+        wheel_deterioration_lr_r = 100 - int(self.LR_right_part_ctr.text()) * 0.01
         self.PrB_grWheel1LR.setValue(int(wheel_deterioration_lr_l))
         self.PrB_grWheel2LR.setValue(int(wheel_deterioration_lr_r))
 
     def display_sr_wheel_stat(self):
-        wheel_deterioration_sr = 100 - (self.sr_l_part_cnt + self.sr_r_part_cnt) * 0.02
+        wheel_deterioration_sr = 100 - (int(self.SR_right_part_ctr.text()) + int(self.SR_left_part_ctr.text())) * 0.02
         self.PrB_grWheelSR.setValue(int(wheel_deterioration_sr))
 
     def reset_grind_wheel_s(self):
         self.PrB_grWheelSR.setValue(100)
+        self.SR_left_part_ctr.setText("0")
+        self.SR_right_part_ctr.setText("0")
+        self.write_to_file()
 
     def reset_grind_wheel_l(self):
         self.PrB_grWheel1LR.setValue(100)
         self.PrB_grWheel2LR.setValue(100)
+        self.LR_left_part_ctr.setText("0")
+        self.LR_right_part_ctr.setText("0")
+        self.write_to_file()
 
 
 stylesheet = '''QMainWindow {
