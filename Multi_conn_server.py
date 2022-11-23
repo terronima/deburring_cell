@@ -87,6 +87,12 @@ def handle_client(conn, addr):
                     transfer(dest, command)
                 print(f"[{addr}] {msg}")
         except:
+            for i in CLIENT_TRACKING:
+                print(i[2])
+                if i[1] == "r1":
+                    transfer("HMI", "r1_faulted")
+                elif i[1] == "r2":
+                    transfer("HMI", "r2_faulted")
             print("Failed to receive data")
             break
     # remove_obj = [item for item in CLIENT_TRACKING if item[0] == source]
