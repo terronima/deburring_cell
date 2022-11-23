@@ -985,8 +985,8 @@ stylesheet = '''QMainWindow {
         background-image: url("./logo.png");         
         background-position: center;} 
         QLabel { color : white; }
-        QCheckBox { color : white; }
-        QRadioButton { color : white; }
+        QCheckBox { color : red; }
+        QRadioButton { color : red; }
     '''
 
 # if __name__ == "__main__":
