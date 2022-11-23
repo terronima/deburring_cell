@@ -828,7 +828,7 @@ class Ui_MainWindow(object):
             QCoreApplication.processEvents()
             try:
                 recv = client.recv(64).decode("utf-8")
-                if recv != "ping":
+                if recv != "z":
                     print(f"received: {recv}")
             except:
                 reconnect()
