@@ -823,7 +823,7 @@ class Ui_MainWindow(object):
         self.read_from_file()
         self.display_lr_wheel_stat()
         self.display_sr_wheel_stat()
-        #self.accumulated_part_count()
+        # self.accumulated_part_count()
         while True:
             QCoreApplication.processEvents()
             try:
@@ -916,7 +916,7 @@ Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
         today_time = QDateTime.currentDateTime()
         time_display = today_time.toString('yyyy-MM-dd hh:mm:ss dddd')
         with open("logs.txt", "r") as f:
-            read_data = f.read().replace("\n", "")
+            read_data = f.read().strip("\n")
             text = read_data.split(" ")
         acc_quantity = int(text[5]) + int(text[11]) + int(text[17]) + int(text[23])
         write_str = time_display + " Total_parts: " + str(acc_quantity)
@@ -924,12 +924,11 @@ Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
         with open("daily_parts.txt", "a") as f:
             f.write(write_str)
 
-
     def read_from_file(self):
-        text = []
         with open("logs.txt", "r") as f:
-            read_data = f.read().replace("\n", "")
+            read_data = f.read().strip("\n")
             text = read_data.split(" ")
+        print(str(text))
         self.LR_right_part_ctr.setText(text[5])
         self.LR_left_part_ctr.setText(text[11])
         self.SR_right_part_ctr.setText(text[17])
