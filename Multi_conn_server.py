@@ -35,9 +35,9 @@ server.bind(ADDR)
 def isopen(conn, addr):
     while True:
         try:
-            conn.sendall(b"ping")
+            conn.send(b"z")
             #print(f"connected {addr}")
-            time.sleep(0.5)
+            time.sleep(1)
         except:
             print("failed")
             print(f"list length is {len(CLIENT_TRACKING)}")
@@ -45,7 +45,7 @@ def isopen(conn, addr):
 
 
 def greet(conn, addr):
-    conn.sendall(b"name")
+    conn.send(b"name")
     msg_length = int(conn.recv(HEADER).decode(FORMAT))
     greet_resp = conn.recv(msg_length).decode(FORMAT)
     print(f"Greet resp: {greet_resp} from {addr}")
@@ -53,7 +53,10 @@ def greet(conn, addr):
     for i in range(len(CLIENT_TRACKING)):
         temp = CLIENT_TRACKING[i][1]
         if temp == greet_resp:
+            close_client = CLIENT_TRACKING[i][2]
+            close_client.close()
             CLIENT_TRACKING.pop(i)
+            print(f"Client {temp} on pos {i} removed")
             print(f"Current list: {CLIENT_TRACKING}")
     CLIENT_TRACKING.append((number, greet_resp, conn))
     print(f"Conn# {number}")
@@ -108,7 +111,7 @@ def transfer(dest, command):
         if selected:
             conn = selected[0][2]
             try:
-                conn.sendall(text)
+                conn.send(text)
                 print(f"Transferred: {text} to {dest}")
             except:
                 print("something went wrong, check sockets")
