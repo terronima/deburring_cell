@@ -18,14 +18,14 @@ LOW = 0
 HIGH = 1
 
 # Velocity and Acceleration
-deburr_vel = 200
+deburr_vel = 550
 jmove_vel = 80
 intermediate_jmove_vel = 80
 lmove_vel = 500
 convergence_vel = 100
 convergence_acc = 200
 safe_acc = 400
-deburr_acc = 250
+deburr_acc = 400
 set_tool("R_Part")
 SIDE = ""
 camera_map = ""
@@ -104,7 +104,7 @@ def greet():
 def deburr_L(*Faces, ref_c):
     global NEW_COORDINATE_SYS_FLAG
     global NEW_COORDINATE_SYS
-    set_digital_output(DEBURR_MOTOR,START)
+    #set_digital_output(DEBURR_MOTOR,START)
     tp_log("deburr L: " + str(SIDE))
     for m in Faces:
         Face_points = []
@@ -162,7 +162,7 @@ def deburr_L(*Faces, ref_c):
 def deburr_R(*Faces, ref_c):
     global NEW_COORDINATE_SYS_FLAG
     global NEW_COORDINATE_SYS
-    set_digital_output(DEBURR_MOTOR, START)
+    #set_digital_output(DEBURR_MOTOR, START)
     tp_log("deburr R: " + str(SIDE))
     for m in Faces:
         Face_points = []
@@ -210,7 +210,7 @@ def deburr_R(*Faces, ref_c):
         wait(0.5)
         release_force
     set_ref_coord(DR_BASE)
-    set_digital_output(DEBURR_MOTOR, STOP)
+    #set_digital_output(DEBURR_MOTOR, STOP)
     NEW_COORDINATE_SYS_FLAG = 0
 
 def dip_part():
@@ -275,7 +275,7 @@ def place():
     tp_log("pallet_place: " + str(pallet_place))
     y = 160 * (pallet_place // 3)
     x = -140 * (pallet_place % 3)
-    place_above = trans(side_l, [x, y, 200, 0, 0, 0])
+    place_above = trans(side_l, [x, y, 100, 0, 0, 0])
     place = trans(side_l, [x, y, 0, 0, 0, 0])
     place_above = coord_transform(place_above, ref_c, DR_BASE)
     place = coord_transform(place, ref_c, DR_BASE)
@@ -337,7 +337,7 @@ def receive_part():
     #    force_condition = check_force_condition(DR_AXIS_X, max=force_desired)
     #    if force_condition == 1:
     #        break
-    wait(2)
+    wait(3)
     set_digital_output(6, 0)
     wait(0.5)
     send("r2,r1,secured", 0)

@@ -20,14 +20,16 @@ Global_standby = posj(-141.6, -0.31, 142.12, 2.05, 37.75, -141.84)
 # Global_Pick_L_j = posj(-138.03, 48.20, 91.53, 0.59, 38.24, -137.18)
 
 # Velocity and Acceleration
-deburr_vel = 200
+deburr_vel = [800, 80]
 jmove_vel = 80
 intermediate_jmove_vel = 80
-lmove_vel = 500
+lmove_vel = 550
 convergence_vel = 100
 convergence_acc = 200
 safe_acc = 400
-deburr_acc = 300
+pick_acc = 300
+intermediate_acc = 200
+deburr_acc = [550, 400]
 set_tool("right part")
 SIDE = "L"
 camera_map = ""
@@ -190,8 +192,8 @@ def pick(pos):
     delta_val = trans(side_l, [delta_x, delta_y, 0, 0, 0, 0])
     pick_pos_above = coord_transform(delta_val_above, ref_c, DR_BASE)
     pick_pos = coord_transform(delta_val, ref_c, DR_BASE)
-    movej(side_j, vel=jmove_vel, acc=safe_acc)
-    movel(pick_pos_above, vel=lmove_vel, acc=safe_acc)
+    movej(side_j, vel=jmove_vel, acc=pick_acc)
+    movel(pick_pos_above, vel=lmove_vel, acc=pick_acc)
     set_digital_output(AIRBLOW_OUTPUT, 1)
     if get_digital_input(9) == 1:
         movel(pick_pos, vel=convergence_vel, acc=convergence_acc)
@@ -214,12 +216,12 @@ def pick(pos):
     release_compliance_ctrl()
     set_digital_output(AIRBLOW_OUTPUT, 0)
     if get_digital_input(10) == 1:
-        movel(pick_pos_above, vel=convergence_vel, acc=safe_acc)
-        movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
+        movel(pick_pos_above, vel=convergence_vel, acc=pick_acc)
+        movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
     else:
         set_digital_output(AIRBLOW_OUTPUT, 0)
-        movel(pick_pos_above, vel=convergence_vel, acc=safe_acc)
-        movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
+        movel(pick_pos_above, vel=convergence_vel, acc=pick_acc)
+        movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
     set_ref_coord(DR_BASE)
 
 
@@ -251,32 +253,32 @@ def deburr_L(*Faces, ref_c):
             release_compliance_ctrl()
             new_centre_position = get_current_posx()
             new_centre_position = new_centre_position[0]
-            new_centre_position = trans(new_centre_position, [0, 0, -5, 0, 0, 0], L_F1_USR_CORD)
+            new_centre_position = trans(new_centre_position, [0, 0,5, 0, 0, 0], L_F1_USR_CORD)
             NEW_COORDINATE_SYS = set_user_cart_coord(new_centre_position, ref=DR_BASE)
             NEW_COORDINATE_SYS_FLAG = 1
             tp_log(str(NEW_COORDINATE_SYS))
         set_ref_coord(NEW_COORDINATE_SYS)
         if L_Face[len(L_Face) - 1] == 1:
-            movej(Global_L_F1_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_L_F1_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
         elif L_Face[len(L_Face) - 1] == 2:
-            movej(Global_L_F2_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_L_F2_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
         elif L_Face[len(L_Face) - 1] == 6:
-            movej(Global_L_F6_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
-            movej(Global_L_F6_2_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_L_F6_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
+            movej(Global_L_F6_2_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
         elif L_Face[len(L_Face) - 1] == 7:
-            movej(Global_L_F7_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_L_F7_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
         elif L_Face[len(L_Face) - 1] == 82:
-            movej(Global_L_F8_2_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_L_F8_2_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
         elif L_Face[len(L_Face) - 1] == 72:
-            movej(Global_L_F7_2_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_L_F7_2_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
         elif L_Face[len(L_Face) - 1] == 8:
-            movej(Global_L_F8_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_L_F8_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
         for i in range(2, len(L_Face) - 2):
             L_Face_point = coord_transform(L_Face[i], DR_BASE, NEW_COORDINATE_SYS)
@@ -320,22 +322,22 @@ def deburr_R(*Faces, ref_c):
             release_compliance_ctrl()
             new_centre_position = get_current_posx()
             new_centre_position = new_centre_position[0]
-            new_centre_position = trans(new_centre_position, [0, 0, -5, 0, 0, 0], L_F1_USR_CORD)
+            new_centre_position = trans(new_centre_position, [0, 0,5, 0, 0, 0], L_F1_USR_CORD)
             NEW_COORDINATE_SYS = set_user_cart_coord(new_centre_position, ref=DR_BASE)
             NEW_COORDINATE_SYS_FLAG = 1
             tp_log(str(NEW_COORDINATE_SYS))
         set_ref_coord(NEW_COORDINATE_SYS)
         if R_Face[len(R_Face) - 1] == 1:
-            movej(Global_R_F1_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_R_F1_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             R_Face.pop()
         elif R_Face[len(R_Face) - 1] == 2:
-            movej(Global_R_F2_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_R_F2_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             R_Face.pop()
         elif R_Face[len(R_Face) - 1] == 6:
-            movej(Global_R_F6_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_R_F6_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             R_Face.pop()
         elif R_Face[len(R_Face) - 1] == 22:
-            movej(Global_R_F2_2_Intermediate, vel=intermediate_jmove_vel, acc=safe_acc)
+            movej(Global_R_F2_2_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             R_Face.pop()
         for i in range(2, len(R_Face) - 2):
             R_Face_point = coord_transform(R_Face[i], DR_BASE, NEW_COORDINATE_SYS)
@@ -353,7 +355,8 @@ def handover():
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
     movej(Global_handover_j, vel=jmove_vel, acc=safe_acc)
     while True:
-        in_data = send("r1,r2,wake", 1)
+        send("r1,r2,wake", 0)
+        in_data = send("", 2)
         #tp_popup("in_data: "+in_data, DR_PM_MESSAGE)
         if in_data == "side":
             send(str("r1,r2," +SIDE), 0)
@@ -428,10 +431,10 @@ def side_by_side_MODE(pallet_map):
             pallet_place = cntr
             return pallet_place
         cntr += 1
-        if cntr >= 8:
+        if cntr >= 9:
             for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
                 if pallet_map[i] == 1:
                     SIDE = "L"
-                    pallet_place = cntr - 8
+                    pallet_place = cntr - 9
                     return pallet_place
                 cntr += 1
