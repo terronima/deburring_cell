@@ -50,6 +50,10 @@ def greet(conn, addr):
     greet_resp = conn.recv(msg_length).decode(FORMAT)
     print(f"Greet resp: {greet_resp} from {addr}")
     number = random.randint(1000, 99999)
+    if greet_resp == "r1":
+        transfer("HMI", "r1_active")
+    elif greet_resp == "r2":
+        transfer("HMI", "r2_active")
     for i in range(len(CLIENT_TRACKING)):
         temp = CLIENT_TRACKING[i][1]
         if temp == greet_resp:
@@ -87,13 +91,11 @@ def handle_client(conn, addr):
                     transfer(dest, command)
                 print(f"[{addr}] {msg}")
         except:
-            for i in CLIENT_TRACKING:
-                print(i[2])
-                if i[1] == "r1":
-                    transfer("HMI", "r1_faulted")
-                elif i[1] == "r2":
-                    transfer("HMI", "r2_faulted")
             print("Failed to receive data")
+            for i in CLIENT_TRACKING:
+                if i[2] == conn:
+                    transfer("HMI", f"{i[1]}_faulted")
+                    print(i[1])
             break
     # remove_obj = [item for item in CLIENT_TRACKING if item[0] == source]
     print(f"[Connection closed] {addr}")
