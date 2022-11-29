@@ -1,4 +1,5 @@
 import socket
+import time
 import sys
 import threading
 
@@ -122,10 +123,11 @@ def send(msg, resp_req): #0 - send no lsten, 1 send and lsten, 2 - no send only 
     while resp_req != 0:
         data = client.recv(64).decode(FORMAT) 
         data = data.strip("z") 
-        if data != "z":
+        if data:
             data = data.strip("z")
             #tp_log(str(data))
             return (data)
+        time.sleep(1)
 
 def send_camera_map(msg):
     data = ""

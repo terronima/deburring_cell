@@ -3,8 +3,10 @@ camera_map = 0
 pallet_map = []
 GREET = 0
 cntr = 0
+PAUSE = 0
 # greet the server and establish connection
 tp_log("Now greeting...")
+
 if GREET == 0:
     tp_log("Greet complete!")
     greet()
@@ -12,8 +14,7 @@ if GREET == 0:
 
 while True:
     tp_log("Entering big loop...")
-    #PAUSE = int(send("r1,HMI,is_r1_paused"))
-    PAUSE = 0
+    PAUSE = int(send("r1,HMI,is_r1_paused"))
     if PAUSE:
         time.sleep(1)
     else:
@@ -23,6 +24,7 @@ while True:
             camera_map = camera_map.strip("z")
             if len(camera_map) == 18:
                 break
+            time.sleep(1)
         tp_log("Original_camera_map before" + str(camera_map))
         
         tp_log("Original_camera_map " + str(camera_map))
