@@ -69,10 +69,10 @@ L_F6 = [Global_L_F6_centre_j, Global_L_F6_centre, Global_L_F6_P1, Global_L_F6_P2
 L_F7 = [Global_L_F7_centre_j, Global_L_F7_P1, Global_L_F7_P2, Global_L_F7_P3, Global_L_F7_P4, Global_L_F7_P5,
         Global_L_F7_Backoff, 7]
 
-L_F7_2 = [Global_L_F7_2_centre_j, Global_L_F7_2_centre, Global_L_F7_2_P4, Global_L_F7_2_P2, Global_L_F7_2_P1,
+L_F7_2 = [Global_L_F7_2_centre_j, Global_L_F7_2_centre, Global_L_F7_2_P4, Global_L_F7_2_P2, Global_L_F7_2_P1, Global_L_F7_2_P1, 
           Global_L_F7_2_Backoff, 72]
 
-L_F8 = [Global_L_F8_centre_j, Global_L_F8_centre, Global_L_F8_P3, Global_L_F8_P2, Global_L_F8_P1, Global_L_F8_Backoff,
+L_F8 = [Global_L_F8_centre_j, Global_L_F8_centre, Global_L_F8_P3, Global_L_F8_P2, Global_L_F8_P1, Global_L_F8_P1, Global_L_F8_Backoff,
         8]
 
 L_F8_2 = [Global_L_F8_2_centre_j, Global_L_F8_2_centre, Global_L_F8_2_P1, Global_L_F8_2_P2, Global_L_F8_2_P3,
@@ -182,8 +182,8 @@ def pick(pos):
     ref_c = None
 
     if (SIDE == "R" and pallet_place == 0):
-        tp_log("Executing first condition")
-        movej(Global_pick_R_0_above_j, vel=jmove_vel, acc=pick_acc)
+        amovej(Global_pick_R_0_above_j, vel=jmove_vel, acc=pick_acc)
+        mwait(0.5)
         set_digital_output(AIRBLOW_OUTPUT, 1)
         if get_digital_input(9) == 1:
             movej(Global_pick_R_0_j, vel=convergence_j_vel, acc=convergence_acc)
@@ -202,8 +202,8 @@ def pick(pos):
             movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
     
     elif (SIDE == "R" and pallet_place == 1):
-        tp_log("Executing second condition")
-        movej(Global_pick_R_1_above_j, vel=jmove_vel, acc=pick_acc)
+        amovej(Global_pick_R_1_above_j, vel=jmove_vel, acc=pick_acc)
+        mwait(0.5)
         set_digital_output(AIRBLOW_OUTPUT, 1)
         if get_digital_input(9) == 1:
             movej(Global_pick_R_1_j, vel=convergence_j_vel, acc=convergence_acc)
@@ -242,9 +242,10 @@ def pick(pos):
         delta_val = trans(side_l, [delta_x, delta_y, 0, 0, 0, 0])
         pick_pos_above = coord_transform(delta_val_above, ref_c, DR_BASE)
         pick_pos = coord_transform(delta_val, ref_c, DR_BASE)
-        movej(side_j, vel=jmove_vel, acc=pick_acc)
-        movel(pick_pos_above, vel=lmove_vel, acc=pick_acc)
+        amovej(side_j, vel=jmove_vel, acc=pick_acc)
+        mwait(0.5)
         set_digital_output(AIRBLOW_OUTPUT, 1)
+        movel(pick_pos_above, vel=lmove_vel, acc=pick_acc)
         if get_digital_input(9) == 1:
             movel(pick_pos, vel=convergence_vel, acc=convergence_acc)
         else:
@@ -285,8 +286,8 @@ def deburr_L(*Faces, ref_c):
     delta_x = None
     delta_y = None
     delta_z = None
-    #set_digital_output(RIGHT_MOTOR, 1)
-    #set_digital_output(LEFT_MOTOR, 0)
+    set_digital_output(RIGHT_MOTOR, 0)
+    set_digital_output(LEFT_MOTOR, 1)
     for m in Faces:
         Face_points = []
         L_Face = []
@@ -316,9 +317,9 @@ def deburr_L(*Faces, ref_c):
             NEW_COORDINATE_SYS_FLAG = 1    
             delta = subtract_pose(new_centre_position, L_F_centre_position)
             tp_log("delta: " + str(delta))
-        delta_x = delta[0]
+        delta_x = delta[0]+8
         delta_y = delta[1]
-        delta_z = delta[2]-5
+        delta_z = delta[2]-12
         if L_Face[len(L_Face) - 1] == 1:
             movej(Global_L_F1_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
@@ -341,11 +342,13 @@ def deburr_L(*Faces, ref_c):
         elif L_Face[len(L_Face) - 1] == 8:
             movej(Global_L_F8_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             L_Face.pop()
-        for i in range(2, len(L_Face) - 2):
+        set_ref_coord(ref_c)
+        L_Face_point = trans(L_Face[2],[delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
+        movel(L_Face_point, vel=lmove_vel, acc=intermediate_acc, ref=ref_c)
+        for i in range(3, len(L_Face) - 2):
             L_Face_point = trans(L_Face[i],[delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
             Face_points.append(L_Face_point)
         backoff_pos = trans(L_Face[len(L_Face) - 1], [delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
-        set_ref_coord(ref_c)
         movesx(Face_points, vel=deburr_vel, acc=deburr_acc, ref=ref_c)
         amovel(backoff_pos, vel=lmove_vel, acc=safe_acc, ref=ref_c)
         mwait(0)
@@ -364,8 +367,8 @@ def deburr_R(*Faces, ref_c):
     delta_x = None
     delta_y = None
     delta_z = None
-    #set_digital_output(RIGHT_MOTOR, 1)
-    #set_digital_output(LEFT_MOTOR, 0)
+    set_digital_output(RIGHT_MOTOR, 1)
+    set_digital_output(LEFT_MOTOR, 0)
     for m in Faces:
         Face_points = []
         R_Face = []
@@ -397,7 +400,7 @@ def deburr_R(*Faces, ref_c):
             tp_log("delta: " + str(delta))
         delta_x = delta[0]
         delta_y = delta[1]
-        delta_z = delta[2]-3
+        delta_z = delta[2]-2
         if R_Face[len(R_Face) - 1] == 1:
             movej(Global_R_F1_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             R_Face.pop()
@@ -410,13 +413,13 @@ def deburr_R(*Faces, ref_c):
         elif R_Face[len(R_Face) - 1] == 22:
             movej(Global_R_F2_2_Intermediate, vel=intermediate_jmove_vel, acc=intermediate_acc)
             R_Face.pop()
-        for i in range(2, len(R_Face) - 2):
+        set_ref_coord(ref_c)
+        R_Face_point = trans(R_Face[2],[delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
+        movel(R_Face_point, vel=lmove_vel, acc=intermediate_acc, ref=ref_c)
+        for i in range(3, len(R_Face) - 2):
             R_Face_point = trans(R_Face[i],[delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
             Face_points.append(R_Face_point)
-        tp_log ("Face Points:" +str(Face_points))
         backoff_pos = trans(R_Face[len(R_Face) - 1], [delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
-        tp_log("Backoff pos: " +str(backoff_pos))
-        set_ref_coord(ref_c)
         movesx(Face_points, vel=deburr_vel, acc=deburr_acc, ref=ref_c)
         amovel(backoff_pos, vel=lmove_vel, acc=safe_acc, ref=ref_c)
         mwait(0)
@@ -427,6 +430,7 @@ def deburr_R(*Faces, ref_c):
 
 
 def handover():
+    set_ref_coord(DR_BASE)
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
     movej(Global_handover_j, vel=jmove_vel, acc=safe_acc)
     while True:
@@ -457,6 +461,20 @@ def handover():
             break
     movel(Global_handover_l, vel=lmove_vel, acc=safe_acc)
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
+
+def Estop_recovery():
+    set_ref_coord(DR_BASE)
+    current_position = get_current_posx()
+    current_position = current_position[0]
+    safe_position = trans(current_position, [0,-50, 300, 0, 0, 0], DR_BASE, DR_BASE)
+    movel(safe_position, vel=intermediate_acc, acc=safe_acc)
+    wait(0.5)
+    movej(Global_estop_recovery_point, vel=50, acc=30)
+    set_digital_output(AIRBLOW_OUTPUT ,1)
+    #wait_nudge()
+    wait(5)
+    move_home(DR_HOME_TARGET_USER)
+
 
 def left_only_MODE(pallet_map):
     global SIDE
