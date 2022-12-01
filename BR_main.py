@@ -81,15 +81,15 @@ while True:
             pick(pick_pos)
 
             if SIDE == "L":
-                #set_digital_output(LEFT_MOTOR, 1)
-                #deburr_L(L_F1, L_F2, L_F3, L_F5, L_F7, L_F8_2, ref_c = L_1_COORD_SYS)
-                #deburr_L(L_F6, L_F4, L_F7_2, L_F8, ref_c = L_2_COORD_SYS)
-                pass
+                set_digital_output(LEFT_MOTOR, 1)
+                deburr_L(L_F1, L_F2, L_F3, L_F5, L_F7, L_F8_2, ref_c = L_1_COORD_SYS)
+                deburr_L(L_F6, L_F4, L_F7_2, L_F8, ref_c = L_2_COORD_SYS)
+                #pass
             elif SIDE == "R":
-                #set_digital_output(RIGHT_MOTOR, 1)
-                #deburr_R(R_F1, R_F2, R_F3, R_F5, R_F7, ref_c = R_1_COORD_SYS)
-                #deburr_R(R_F6, R_F4, R_F8, ref_c = R_2_COORD_SYS)
-                pass
+                set_digital_output(RIGHT_MOTOR, 1)
+                deburr_R(R_F1, R_F2, R_F3, R_F5, R_F7, ref_c = R_1_COORD_SYS)
+                deburr_R(R_F6, R_F4, R_F8, ref_c = R_2_COORD_SYS)
+                #pass
                 
             if PICK_MODE == "left_only":
                 L_pallet_sum = 0
