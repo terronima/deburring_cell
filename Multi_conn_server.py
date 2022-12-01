@@ -1,7 +1,7 @@
 ﻿import socket
 import threading
 import time
-
+import random
 
 HEADER = 64
 PORT = 12347
@@ -9,12 +9,13 @@ SERVER = "127.0.0.1"  # socket.gethostbyname(socket.gethostname())
 ADDR = ("", PORT)
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
-CLIENT_TRACKING = {}
+CLIENT_TRACKING = []
 Temp_data_storage = ''
 QUIT = ''
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
+
 
 '''def close_server():
     while True:
@@ -28,59 +29,46 @@ server.bind(ADDR)
             continue'''
 
 
-def robot_status_to_HMI(name):
-    if name and "HMI" in CLIENT_TRACKING:
-        if name == "r1":
-            transfer(CLIENT_TRACKING["HMI"], "r1_active")
-        elif name == "r2":
-            transfer(CLIENT_TRACKING["HMI"], "r2_active")
-    elif name not in CLIENT_TRACKING and "HMI" in CLIENT_TRACKING:
-        if name == "r1":
-            transfer(CLIENT_TRACKING["HMI"], "r1_faulted")
-        elif name == "r2":
-            transfer(CLIENT_TRACKING["HMI"], "r2_faulted")
-
-
-def is_open(conn, addr):
-    global CLIENT_TRACKING
+def isopen(conn, addr):
     while True:
         try:
-            conn.send(b" ")
-            # print(f"connected {addr}")
+            conn.send(b"z")
+            #print(f"connected {addr}")
             time.sleep(1)
         except:
             print("failed")
-            print(f"list length is {len(CLIENT_TRACKING)}")
+            print(f"list is {CLIENT_TRACKING}")
             break
+        time.sleep(1)
 
 
 def greet(conn, addr):
-    global CLIENT_TRACKING
     conn.send(b"name")
     msg_length = int(conn.recv(HEADER).decode(FORMAT))
     greet_resp = conn.recv(msg_length).decode(FORMAT)
     print(f"Greet resp: {greet_resp} from {addr}")
-    # if greet_resp in CLIENT_TRACKING:
-    #     CLIENT_TRACKING[greet_resp].close()
-    #     CLIENT_TRACKING.pop(greet_resp)
-    #     print(f"Current list: {CLIENT_TRACKING}")
-    CLIENT_TRACKING.update({f"{greet_resp}": conn})
-    transfer(CLIENT_TRACKING[greet_resp], "complete")
-    # print(CLIENT_TRACKING)
+    number = random.randint(1000, 99999)
+    for i in CLIENT_TRACKING:
+        if greet_resp in i:
+            close_client = i[2]
+            close_client.close()
+            CLIENT_TRACKING.remove(i)
+            print(f"Client {i[1]} is removed")
+            print(f"Current list: {CLIENT_TRACKING}")
+    CLIENT_TRACKING.append((number, greet_resp, conn))
+    print(f"Conn# {number}")
+    transfer(greet_resp, "complete")
     print("Greeting complete")
-    return greet_resp
+    return number
 
 
 def handle_client(conn, addr):
-    global CLIENT_TRACKING
     print(f"[NEW CONNECTION] {addr} connected")
     connected = True
-    conn_name = greet(conn, addr)
-    timer = threading.Timer(0.1, is_open, args=(conn, addr))
+    conn_pos = greet(conn, addr)
+    timer = threading.Timer(0.1, isopen, args=(conn, addr))
     timer.start()
-    robot_status_to_HMI(conn_name)
     while connected:
-        robot_status_to_HMI(conn_name)
         try:
             msg_length = conn.recv(HEADER).decode(FORMAT)
             if msg_length:
@@ -90,30 +78,47 @@ def handle_client(conn, addr):
                 msg_split = msg.split(',')
                 dest = msg_split[1]
                 command = msg_split[2]
-                if command == DISCONNECT_MESSAGE:
-                    break
-                transfer(CLIENT_TRACKING[dest], command)
+                # if command == DISCONNECT_MESSAGE:
+                #     break
+                if dest == "r1" or "r2" or "cam" or "HMI":
+                    transfer(dest, command)
                 print(f"[{addr}] {msg}")
+            time.sleep(1)
         except:
             print("Failed to receive data")
+            for i in CLIENT_TRACKING:
+                if conn in i:
+                    transfer("HMI", f"{i[1]}_faulted")
+                    print(i[1])
             break
     # remove_obj = [item for item in CLIENT_TRACKING if item[0] == source]
-    conn.close()
-    CLIENT_TRACKING.pop(conn_name)
     print(f"[Connection closed] {addr}")
-    print(CLIENT_TRACKING)
-
+    i = 0
+    while True:
+        if i == len(CLIENT_TRACKING):
+            i = 0
+        stat = CLIENT_TRACKING[i][0]
+        if stat == conn_pos:
+            CLIENT_TRACKING.pop(i)
+            print("list of clients" + str(CLIENT_TRACKING))
+            break
+        i += 1
+    conn.close()
 
 
 def transfer(dest, command):
-    conn = dest
-    text = command.encode(FORMAT)
-    try:
-        conn.send(text)
-        print(f"Transferred: {text} to {dest}")
-    except:
-        print("something went wrong, check sockets")
-    print(f"{dest}, {text}")
+    while True:
+        selected = [item for item in CLIENT_TRACKING if item[1] == dest]
+        text = command.encode(FORMAT)
+        if selected:
+            conn = selected[0][2]
+            try:
+                conn.send(text)
+                print(f"Transferred: {text} to {dest}")
+            except:
+                print("something went wrong, check sockets")
+            print(f"{dest}, {text}")
+            break
 
 
 def start():

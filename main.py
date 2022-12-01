@@ -1,4 +1,5 @@
 
+
 # test splitting sequence (0-8 are rights, 9-17 are lefts)
 camera_data = [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1]
 only_left = 0
@@ -163,3 +164,8 @@ listen()
 #     client.connect(ADDR)
 #     new_thread = threading.Thread(listen())
 #     new_thread.start()
+# start_time = time.time()
+# time.sleep(5)
+# stop_time = time.time()
+# time_past = int(stop_time - start_time)
+# print(f"{time_past}")

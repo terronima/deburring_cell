@@ -852,14 +852,22 @@ class Ui_MainWindow(object):
             if recv[0] == "q":
                 if recv[1] == "b":
                     if recv[2] == "r":
-                        self.LR_left_part_ctr.setText(f"{recv[3::]}")
+                        br_prt_counter = int(self.LR_left_part_ctr.text())
+                        br_prt_counter += 1
+                        self.LR_left_part_ctr.setText(f"{br_prt_counter}")
                     elif recv[2] == "l":
-                        self.LR_right_part_ctr.setText(f"{recv[3::]}")
+                        bl_prt_counter = int(self.LR_right_part_ctr.text())
+                        bl_prt_counter += 1
+                        self.LR_right_part_ctr.setText(f"{bl_prt_counter}")
                 elif recv[1] == "s":
                     if recv[2] == "r":
-                        self.SR_left_part_ctr.setText(f"{recv[3::]}")
+                        sr_prt_counter = int(self.SR_left_part_ctr.text())
+                        sr_prt_counter += 1
+                        self.SR_left_part_ctr.setText(f"{sr_prt_counter}")
                     elif recv[2] == "l":
-                        self.SR_right_part_ctr.setText(f"{recv[3::]}")
+                        sl_prt_counter = int(self.SR_right_part_ctr.text())
+                        sl_prt_counter += 1
+                        self.SR_right_part_ctr.setText(f"{sl_prt_counter}")
                 self.display_sr_wheel_stat()
                 self.display_lr_wheel_stat()
                 self.write_to_file()
