@@ -1,3 +1,4 @@
+import time
 pallet_place = None
 camera_map = 0
 pallet_map = []
@@ -19,12 +20,17 @@ while True:
         time.sleep(1)
     else:
         # request camera map
+        watchdog_timer_start = time.time()
         while True:
             camera_map = send("r1,cam,r1_send_cam_data", 1)
             camera_map = camera_map.strip("z")
             if len(camera_map) == 18:
                 break
             time.sleep(1)
+            watchdog_timer_current = time.time()
+            timeout = int(watchdog_timer_current) - int(watchdog_timer_start)
+            if timeout >= 20:
+                exit()
         tp_log("Original_camera_map before" + str(camera_map))
         
         tp_log("Original_camera_map " + str(camera_map))

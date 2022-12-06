@@ -1,4 +1,4 @@
-Big robot right parts produced: 50 
-Big robot left parts produced: 150 
-Small robot right parts produced: 180 
-Small robot left parts produced: 80 
+Big robot right parts produced: 154 
+Big robot left parts produced: 51 
+Small robot right parts produced: 81 
+Small robot left parts produced: 181 

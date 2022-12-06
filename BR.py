@@ -430,32 +430,42 @@ def deburr_R(*Faces, ref_c):
 def handover():
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
     movej(Global_handover_j, vel=jmove_vel, acc=safe_acc)
+    flag = 0
     while True:
-        send("r1,r2,wake", 0)
-        in_data = send("", 2)
-        #tp_popup("in_data: "+in_data, DR_PM_MESSAGE)
-        if in_data == "side":
-            send(str("r1,r2," +SIDE), 0)
+        while True:
+            send("r1,r2,wake", 0)
+            in_data = send("", 2)
+            #tp_popup("in_data: "+in_data, DR_PM_MESSAGE)
+            if in_data == "side":
+                send(str("r1,r2," +SIDE), 0)
+                break
+        flag += 1
+        while True:
+            ready_state = send("", 2)
+            #tp_popup("ready_state: "+ready_state, DR_PM_MESSAGE)
+            if ready_state == "ready":
+                send("r1,r2,okay", 0)
+                break
+        flag += 1
+        while True:
+            secured = send("", 2)
+            #tp_popup("secured: "+secured, DR_PM_MESSAGE)
+            if secured == "secured":
+                set_digital_output(7, 1)
+                break
+        flag += 1
+        send("r1,r2,part_released",0)
+        while True:
+            done = send("", 2)
+            #tp_popup("done: "+done, DR_PM_MESSAGE)
+            if done == "done":
+                #set_digital_output(7, 0)
+                break
+        flag += 1
+        if flag == 4:
             break
-    while True:
-        ready_state = send("", 2)
-        #tp_popup("ready_state: "+ready_state, DR_PM_MESSAGE)
-        if ready_state == "ready":
-            send("r1,r2,okay", 0)
-            break
-    while True:
-        secured = send("", 2)
-        #tp_popup("secured: "+secured, DR_PM_MESSAGE)
-        if secured == "secured":
-            set_digital_output(7, 1)
-            break
-    send("r1,r2,part_released",0)
-    while True:
-        done = send("", 2)
-        #tp_popup("done: "+done, DR_PM_MESSAGE)
-        if done == "done":
-            #set_digital_output(7, 0)
-            break
+        else:
+            flag = 0
     movel(Global_handover_l, vel=lmove_vel, acc=safe_acc)
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)
 

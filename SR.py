@@ -310,25 +310,49 @@ def receive_part():
     #movel(Handover_above)
     set_digital_output(6, 1)
     wait(0.5)
+    flag = 0
     while True:
-        in_data = send("", 2)
-        if in_data == "wake": 
-            #tp_popup("in_data: "+in_data, DR_PM_MESSAGE) 
-            send("r2,r1,side", 0)
+        # start timer before the loop
+        start_tmr = time.time()
+        while True:
+            in_data = send("", 2)
+            # take current time in the loop
+            proc_tmr = time.time()
+            if in_data == "wake":
+                #tp_popup("in_data: "+in_data, DR_PM_MESSAGE)
+                send("r2,r1,side", 0)
+                flag += 1
+                break
+            # if response is not received, continue till the end of the loop
+            elif int(proc_tmr - start_tmr) > 3:
+                break
+        start_tmr = time.time()
+        while True:
+            side = send("", 2)
+            tp_log("received side from BR: " + str(side))
+            #tp_popup("SIDE: "+SIDE, DR_PM_MESSAGE)
+            proc_tmr = time.time()
+            if side == "L" or side == "R":
+                send("r2,r1,ready", 0)
+                flag += 1
+                break
+            elif int(proc_tmr - start_tmr) > 3:
+                break
+        start_tmr = time.time()
+        while True:
+            ready_confirm = send("", 2)
+            #tp_popup("ready_confirm: "+ready_confirm, DR_PM_MESSAGE)
+            proc_tmr = time.time()
+            if ready_confirm == "okay":
+                #tp_popup("moving closer", DR_PM_MESSAGE)
+                flag += 1
+                break
+            elif int(proc_tmr - start_tmr) > 3:
+                break
+        if flag == 3:
             break
-    while True:
-        side = send("", 2)
-        tp_log("received side from BR: " + str(side))
-        #tp_popup("SIDE: "+SIDE, DR_PM_MESSAGE)
-        if side == "L" or side == "R":            
-            send("r2,r1,ready", 0)
-            break
-    while True:
-        ready_confirm = send("", 2)
-        #tp_popup("ready_confirm: "+ready_confirm, DR_PM_MESSAGE)
-        if ready_confirm == "okay":
-            #tp_popup("moving closer", DR_PM_MESSAGE)
-            break
+        else:
+            flag = 0
     set_ref_coord(DR_BASE)
     movel(Global_handover_l, vel=handover_speed)
     task_compliance_ctrl(stiffness)
