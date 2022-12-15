@@ -66,7 +66,7 @@ class Worker(QObject):
             if recv == "break":
                 print("break")
                 break
-            time.sleep(1)
+            time.sleep(0.1)
         self.finished.emit()
 
 
