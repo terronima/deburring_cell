@@ -194,89 +194,136 @@ import threading
 #     f.start()
 
 
-from PyQt5.QtGui import *
+from PyQt5.QtCore import QObject, QThread, pyqtSignal
+import time
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+import socket
+import sys
+# Snip...
 
-import time
+
+HEADER = 64
+PORT = 12347
+FORMAT = "utf-8"
+DISCONNECT_MESSAGE = "!DISCONNECT"
+SERVER = "localhost"
+# SERVER = "192.168.1.10"
+ADDR = (SERVER, PORT)
+RESPOND = "ready_to_transfer"
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
 
 
-class Worker(QRunnable):
-    '''
-    Worker thread
-    '''
-    tmr = 0
-    stopped = 0
-    @pyqtSlot()
+def encode(enc_msg):
+    message = enc_msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    # print(f"Encoded: {message}")
+    message_return = (send_length, message)
+    return message_return
+
+
+def send(msg):
+    while True:
+        message_enc = encode(msg)
+        try:
+            client.send(message_enc[0])
+            client.send(message_enc[1])
+            break
+        except:
+            print(f"Exception captured")
+
+# Step 1: Create a worker class
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(str)
     def run(self):
-        '''
-        Your code goes in this function
-        '''
-        start_time=time.time()
+        """Long-running task."""
+        recv = ""
         while True:
-            current_time = time.time()
-            self.tmr = str("%.2f" % (current_time - start_time))
-            #print(self.tmr)
-            if self.stopped:
+            try:
+                recv = client.recv(64).decode("utf-8")
+                recv = recv.strip("z")
+                if recv != "z" and len(recv) > 0:
+                    print(f"received: {recv}")
+            except:
+                print("failed")
+            if len(recv) > 1:
+                self.progress.emit(recv)
+            if recv == "name":
+                send("test")
+            if recv == "break":
                 break
-            time.sleep(0.01)
+        self.finished.emit()
 
+class Window(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.clicksCount = 0
+        self.setupUi()
 
-def popup():
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Information)
-    msg.setWindowTitle("Empty table")
-    msg.setInformativeText("Please load more parts and hit start button.")
-    msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-    x = msg.exec_()
-
-
-class MainWindow(QMainWindow):
-
-    def __init__(self, *args, **kwargs):
-        super(MainWindow, self).__init__(*args, **kwargs)
-
-        self.message = ""
-        self.counter = 0
-        self.label_tmr = 0
+    def setupUi(self):
+        self.setWindowTitle("Freezing GUI")
+        self.resize(300, 150)
+        self.centralWidget = QWidget()
+        self.setCentralWidget(self.centralWidget)
+        # Create and connect widgets
+        self.clicksLabel = QLabel("Counting: 0 clicks", self)
+        self.clicksLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.stepLabel = QLabel("Long-Running Step: 0")
+        self.stepLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.countBtn = QPushButton("Click me!", self)
+        self.countBtn.clicked.connect(self.countClicks)
+        self.longRunningBtn = QPushButton("Long-Running Task!", self)
+        self.longRunningBtn.clicked.connect(self.runLongTask)
+        # Set the layout
         layout = QVBoxLayout()
+        layout.addWidget(self.clicksLabel)
+        layout.addWidget(self.countBtn)
+        layout.addStretch()
+        layout.addWidget(self.stepLabel)
+        layout.addWidget(self.longRunningBtn)
+        self.centralWidget.setLayout(layout)
 
-        self.l = QLabel("yolo")
-        b = QPushButton("DANGER!")
-        b.pressed.connect(self.oh_no)
+    def countClicks(self):
+        self.clicksCount += 1
+        self.clicksLabel.setText(f"Counting: {self.clicksCount} clicks")
 
-        c = QPushButton("?")
-        c.pressed.connect(self.change_message)
+    def reportProgress(self, n):
+        self.stepLabel.setText(f"Long-Running Step: {n}")
+        if n == "hello":
+            send("test,r1,world")
 
-        d = QPushButton("pause!")
-        d.pressed.connect(self.pause)
+    def runLongTask(self):
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = Worker()
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.reportProgress)
+        # Step 6: Start the thread
+        self.thread.start()
 
-        layout.addWidget(self.l)
-        layout.addWidget(b)
-        layout.addWidget(c)
-        layout.addWidget(d)
+        # Final resets
+        self.longRunningBtn.setEnabled(False)
+        self.thread.finished.connect(
+            lambda: self.longRunningBtn.setEnabled(True)
+        )
+        self.thread.finished.connect(
+            lambda: self.stepLabel.setText("Long-Running Step: 0")
+        )
 
-        w = QWidget()
-        w.setLayout(layout)
-        self.threadpool = QThreadPool()
-        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
-        self.setCentralWidget(w)
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.change_message)
-        self.show()
-
-    def pause(self):
-        self.timer.stop()
-        self.label_tmr = 0
-    def change_message(self):
-        self.label_tmr += 0.01
-        self.l.setText(str(str("%.2f" % self.label_tmr)))
-
-    def oh_no(self):
-        #self.threadpool.start(self.worker)
-        self.timer.start(10)  # every 100 milliseconds
-
-
-app = QApplication([])
-window = MainWindow()
-app.exec_()
+app = QApplication(sys.argv)
+window = Window()
+window.show()
+sys.exit(app.exec())

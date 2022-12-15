@@ -46,6 +46,7 @@ def listen():
     while True:
         try:
             received = client.recv(64).decode(FORMAT)
+            received = received.strip("z")
         except:
             print("Failed to receive response")
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
