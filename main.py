@@ -201,6 +201,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import socket
 import sys
+
 # Snip...
 
 
@@ -237,10 +238,12 @@ def send(msg):
         except:
             print(f"Exception captured")
 
+
 # Step 1: Create a worker class
 class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(str)
+
     def run(self):
         """Long-running task."""
         recv = ""
@@ -259,6 +262,7 @@ class Worker(QObject):
             if recv == "break":
                 break
         self.finished.emit()
+
 
 class Window(QMainWindow):
     def __init__(self, parent=None):
@@ -322,6 +326,7 @@ class Window(QMainWindow):
         self.thread.finished.connect(
             lambda: self.stepLabel.setText("Long-Running Step: 0")
         )
+
 
 app = QApplication(sys.argv)
 window = Window()

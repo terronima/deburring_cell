@@ -46,6 +46,30 @@ def reconnect():
     print("attempted...")
 
 
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(str)
+
+    def run(self):
+        """Long-running task."""
+        recv = ""
+        while True:
+            try:
+                recv = client.recv(64).decode("utf-8")
+                recv = recv.strip("z")
+                if recv != "z" and len(recv) > 0:
+                    print(f"received: {recv}")
+            except:
+                print("failed")
+            if len(recv) > 1:
+                self.progress.emit(recv)
+            if recv == "break":
+                print("break")
+                break
+            time.sleep(1)
+        self.finished.emit()
+
+
 class Ui_MainWindow(object):
     active = True
     cycles = 0
@@ -784,8 +808,8 @@ class Ui_MainWindow(object):
         # create a timer
         self.timer = QtCore.QTimer()
         # run update function every 1000 milliseconds
-        self.timer.timeout.connect(self.status_updates)
-        self.timer.start(1500)
+        # self.timer.timeout.connect(self.status_updates)
+        # self.timer.start(1500)
         # create a cycle timer
         self.cycle_timer = QtCore.QTimer()
         self.cycle_timer.timeout.connect(self.count_cycle_time)
@@ -794,6 +818,8 @@ class Ui_MainWindow(object):
         self.PB_BR_Off_DOWN.clicked.connect(lambda: self.extra_offset_BR(dir=-1))
         self.PB_SR_Off_UP.clicked.connect(lambda: self.extra_offset_SR(dir=1))
         self.PB_SR_Off_DOWN.clicked.connect(lambda: self.extra_offset_SR(dir=-1))
+        # run polling
+        self.runPolling()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -880,6 +906,22 @@ class Ui_MainWindow(object):
         self.PB_Reset_LR_Wheel.setText(_translate("MainWindow", "Reset wheel"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
 
+    def runPolling(self):
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = Worker()
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.status_updates)
+        # Step 6: Start the thread
+        self.thread.start()
+
     def start_timer(self):
         self.cycle_timer.start(100)
         self.millsec = 0
@@ -928,109 +970,91 @@ class Ui_MainWindow(object):
     def resume_seq(self):
         self.PAUSE = 0
 
-    def status_updates(self):
-        br_r_tmr = 0
-        sr_r_tmr = 0
-        br_l_tmr = 0
-        sr_l_tmr = 0
-        cntr = 0
-        recv = ""
-        # self.accumulated_part_count()
-        QCoreApplication.processEvents()
-        try:
-            recv = client.recv(64).decode("utf-8")
-            recv = recv.strip("z")
-            if recv != "z" and len(recv) > 0:
-                print(f"received: {recv}")
-        except:
-            reconnect()
-            if cntr == 2:
-                sys.exit()
-            cntr += 1
-        if len(recv) > 0:
-            if len(recv) == 36:
-                self.trig_camera(recv)
-            if recv in ["start_LRR", "start_LRL", "start_SRR", "start_SRL"]:
-                self.robot_side = recv
-                self.start_timer()
-            if recv in ["stop_LRR", "stop_LRL", "stop_SRR", "stop_SRL"]:
-                self.stop_timer()
-            if recv == "no_parts_present":
-                popup(text="Please load more parts and hit start button.", title="Empty table")
-            if recv == "PICK_MODE":
-                if self.RB_One_side.isChecked():
-                    self.side = "side_by_side"
-                elif self.RB_Intermittent.isChecked():
-                    self.side = "intermittent"
-                elif self.RB_Left_only.isChecked():
-                    self.side = "left_only"
-                elif self.RB_Right_only.isChecked():
-                    self.side = "right_only"
-                self.send(f"HMI,r1,{self.side}")
-            if recv == "is_r1_paused":
-                self.send(f"HMI,r1,{self.PAUSE}")
-            if recv[0] == "q":
-                if recv[1] == "b":
-                    if recv[2] == "r":
-                        br_prt_counter = int(self.LR_left_part_ctr.text())
-                        br_prt_counter += 1
-                        self.LR_left_part_ctr.setText(f"{br_prt_counter}")
-                    elif recv[2] == "l":
-                        bl_prt_counter = int(self.LR_right_part_ctr.text())
-                        bl_prt_counter += 1
-                        self.LR_right_part_ctr.setText(f"{bl_prt_counter}")
-                elif recv[1] == "s":
-                    if recv[2] == "r":
-                        sr_prt_counter = int(self.SR_left_part_ctr.text())
-                        sr_prt_counter += 1
-                        self.SR_left_part_ctr.setText(f"{sr_prt_counter}")
-                    elif recv[2] == "l":
-                        sl_prt_counter = int(self.SR_right_part_ctr.text())
-                        sl_prt_counter += 1
-                        self.SR_right_part_ctr.setText(f"{sl_prt_counter}")
-                self.display_sr_wheel_stat()
-                self.display_lr_wheel_stat()
-                self.write_to_file()
-            if recv[0] == "t":
-                if recv[1] == "b":
-                    if recv[2] == "r":
-                        self.LR_left_part_tmr.setText(f"{recv[3::]}")
-                    elif recv[2] == "l":
-                        self.LR_right_part_tmr.setText(f"{recv[3::]}")
-                elif recv[1] == "s":
-                    if recv[2] == "r":
-                        self.SR_left_part_tmr.setText(f"{recv[3::]}")
-                    elif recv[2] == "l":
-                        self.SR_right_part_tmr.setText(f"{recv[3::]}")
-            if recv == "name":
-                data = "HMI"
-                self.send(f"{data}")
-                print(f"Sent: {data}")
-            if recv == "r2_active":
-                self.SR_Act_Stat.setStyleSheet("background-color: green")
-                self.SR_Pause_Stat.setStyleSheet("background-color: none")
-                self.SR_Fault_Stat.setStyleSheet("background-color: none")
-            elif recv == "r2_paused":
-                self.SR_Act_Stat.setStyleSheet("background-color: none")
-                self.SR_Pause_Stat.setStyleSheet("background-color: yellow")
-                self.SR_Fault_Stat.setStyleSheet("background-color: none")
-            elif recv == "r2_faulted":
-                self.SR_Act_Stat.setStyleSheet("background-color: none")
-                self.SR_Pause_Stat.setStyleSheet("background-color: none")
-                self.SR_Fault_Stat.setStyleSheet("background-color: red")
-            if recv == "r1_active":
-                self.LR_Active_Stat.setStyleSheet("background-color: green")
-                self.LR_Pause_Stat.setStyleSheet("background-color: none")
-                self.LR_Fault_Stat.setStyleSheet("background-color: none")
-            elif recv == "r1_paused":
-                self.LR_Active_Stat.setStyleSheet("background-color: none")
-                self.LR_Pause_Stat.setStyleSheet("background-color: yellow")
-                self.LR_Fault_Stat.setStyleSheet("background-color: none")
-            elif recv == "r1_faulted":
-                self.LR_Active_Stat.setStyleSheet("background-color: none")
-                self.LR_Pause_Stat.setStyleSheet("background-color: none")
-                self.LR_Fault_Stat.setStyleSheet("background-color: red")
-        time.sleep(0.1)
+    def status_updates(self, incoming):
+        recv = incoming
+        print(f"from status update recv is {recv}")
+        if len(recv) == 36:
+            self.trig_camera(recv)
+        if recv in ["start_LRR", "start_LRL", "start_SRR", "start_SRL"]:
+            self.robot_side = recv
+            self.start_timer()
+        if recv in ["stop_LRR", "stop_LRL", "stop_SRR", "stop_SRL"]:
+            self.stop_timer()
+        if recv == "no_parts_present":
+            popup(text="Please load more parts and hit start button.", title="Empty table")
+        if recv == "PICK_MODE":
+            if self.RB_One_side.isChecked():
+                self.side = "side_by_side"
+            elif self.RB_Intermittent.isChecked():
+                self.side = "intermittent"
+            elif self.RB_Left_only.isChecked():
+                self.side = "left_only"
+            elif self.RB_Right_only.isChecked():
+                self.side = "right_only"
+            self.send(f"HMI,r1,{self.side}")
+        if recv == "is_r1_paused":
+            self.send(f"HMI,r1,{self.PAUSE}")
+        if recv[0] == "q":
+            if recv[1] == "b":
+                if recv[2] == "r":
+                    br_prt_counter = int(self.LR_left_part_ctr.text())
+                    br_prt_counter += 1
+                    self.LR_left_part_ctr.setText(f"{br_prt_counter}")
+                elif recv[2] == "l":
+                    bl_prt_counter = int(self.LR_right_part_ctr.text())
+                    bl_prt_counter += 1
+                    self.LR_right_part_ctr.setText(f"{bl_prt_counter}")
+            elif recv[1] == "s":
+                if recv[2] == "r":
+                    sr_prt_counter = int(self.SR_left_part_ctr.text())
+                    sr_prt_counter += 1
+                    self.SR_left_part_ctr.setText(f"{sr_prt_counter}")
+                elif recv[2] == "l":
+                    sl_prt_counter = int(self.SR_right_part_ctr.text())
+                    sl_prt_counter += 1
+                    self.SR_right_part_ctr.setText(f"{sl_prt_counter}")
+            self.display_sr_wheel_stat()
+            self.display_lr_wheel_stat()
+            self.write_to_file()
+        if recv[0] == "t":
+            if recv[1] == "b":
+                if recv[2] == "r":
+                    self.LR_left_part_tmr.setText(f"{recv[3::]}")
+                elif recv[2] == "l":
+                    self.LR_right_part_tmr.setText(f"{recv[3::]}")
+            elif recv[1] == "s":
+                if recv[2] == "r":
+                    self.SR_left_part_tmr.setText(f"{recv[3::]}")
+                elif recv[2] == "l":
+                    self.SR_right_part_tmr.setText(f"{recv[3::]}")
+        if recv == "name":
+            data = "HMI"
+            self.send(f"{data}")
+            print(f"Sent: {data}")
+        if recv == "r2_active":
+            self.SR_Act_Stat.setStyleSheet("background-color: green")
+            self.SR_Pause_Stat.setStyleSheet("background-color: none")
+            self.SR_Fault_Stat.setStyleSheet("background-color: none")
+        elif recv == "r2_paused":
+            self.SR_Act_Stat.setStyleSheet("background-color: none")
+            self.SR_Pause_Stat.setStyleSheet("background-color: yellow")
+            self.SR_Fault_Stat.setStyleSheet("background-color: none")
+        elif recv == "r2_faulted":
+            self.SR_Act_Stat.setStyleSheet("background-color: none")
+            self.SR_Pause_Stat.setStyleSheet("background-color: none")
+            self.SR_Fault_Stat.setStyleSheet("background-color: red")
+        if recv == "r1_active":
+            self.LR_Active_Stat.setStyleSheet("background-color: green")
+            self.LR_Pause_Stat.setStyleSheet("background-color: none")
+            self.LR_Fault_Stat.setStyleSheet("background-color: none")
+        elif recv == "r1_paused":
+            self.LR_Active_Stat.setStyleSheet("background-color: none")
+            self.LR_Pause_Stat.setStyleSheet("background-color: yellow")
+            self.LR_Fault_Stat.setStyleSheet("background-color: none")
+        elif recv == "r1_faulted":
+            self.LR_Active_Stat.setStyleSheet("background-color: none")
+            self.LR_Pause_Stat.setStyleSheet("background-color: none")
+            self.LR_Fault_Stat.setStyleSheet("background-color: red")
 
     def write_to_file(self):
         string = f'''Big robot right parts produced: {self.LR_left_part_ctr.text()} 
@@ -1148,7 +1172,7 @@ MainWindow = QtWidgets.QMainWindow()
 ui = Ui_MainWindow()
 ui.setupUi(MainWindow)
 MainWindow.show()
-t = QtCore.QTimer()
-t.singleShot(0, ui.status_updates)
+# t = QtCore.QTimer()
+# t.singleShot(0, ui.runPolling)
 # starting the app
 sys.exit(app.exec_())
