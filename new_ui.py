@@ -49,7 +49,6 @@ def reconnect():
 class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(str)
-
     def run(self):
         """Long-running task."""
         recv = ""
@@ -74,7 +73,9 @@ class Ui_MainWindow(object):
     active = True
     cycles = 0
     PAUSE = 0
-
+    error_samples = {"no_parts_present": ("Please load more parts and hit start button.", "Empty table"),
+                     "water_level_is_low": ("Please add more water into basin", "Low water level"),
+                     "out_feed_table_is_full": ("Please remove parts from out feed table", "Out feed table is full")}
     def __init__(self):
         self.robot_side = ""
         self.millsec = 0
@@ -955,6 +956,7 @@ class Ui_MainWindow(object):
             try:
                 client.send(message_enc[0])
                 client.send(message_enc[1])
+                print(message_enc[1])
                 break
             except:
                 print(f"Exception captured")
@@ -980,8 +982,8 @@ class Ui_MainWindow(object):
             self.start_timer()
         if recv in ["stop_LRR", "stop_LRL", "stop_SRR", "stop_SRL"]:
             self.stop_timer()
-        if recv == "no_parts_present":
-            popup(text="Please load more parts and hit start button.", title="Empty table")
+        if recv in self.error_samples:
+            popup(text=self.error_samples[recv][0], title=self.error_samples[recv][1])
         if recv == "PICK_MODE":
             if self.RB_One_side.isChecked():
                 self.side = "side_by_side"
@@ -1031,6 +1033,10 @@ class Ui_MainWindow(object):
             data = "HMI"
             self.send(f"{data}")
             print(f"Sent: {data}")
+        if recv == "br_offset":
+            self.send(f"HMI,r1,{self.BR_Offset}")
+        elif recv == "sr_offset":
+            self.send(f"HMI,r2,{self.SR_Offset}")
         if recv == "r2_active":
             self.SR_Act_Stat.setStyleSheet("background-color: green")
             self.SR_Pause_Stat.setStyleSheet("background-color: none")
@@ -1071,6 +1077,7 @@ Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
                 self.BR_Offset = 3.00
             elif self.BR_Offset <= -3.10:
                 self.BR_Offset = -3.00
+        self.BR_Offset = float(str("%.2f" % self.BR_Offset))
         self.BR_Offset_Val.setText(str("%.2f" % self.BR_Offset))
 
     def extra_offset_SR(self, dir):
@@ -1080,7 +1087,9 @@ Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
                 self.SR_Offset = 3.00
             elif self.SR_Offset <= -3.10:
                 self.SR_Offset = -3.00
+        self.SR_Offset = float(str("%.2f" % self.SR_Offset))
         self.SR_Offset_Val.setText(str("%.2f" % self.SR_Offset))
+
 
     def accumulated_part_count(self):
         today_time = QDateTime.currentDateTime()
