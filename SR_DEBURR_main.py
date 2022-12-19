@@ -33,6 +33,8 @@ while True:
         send("r2,HMI,r2_faulted", 0)
     place()
     if SIDE == "R":
+        send("r2,HMI,qsr", 0)
         send("r2,HMI,stop_SRR", 0)
     elif SIDE == "L":
+        send("r2,HMI,qsl", 0)
         send("r2,HMI,stop_SRL", 0)

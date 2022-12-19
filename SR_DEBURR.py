@@ -36,6 +36,8 @@ set_tool("R_Part")
 SIDE = ""
 camera_map = ""
 
+HMI_offset = 0.0
+
 # List of point for L Part faces
 L_F0 = [Global_L_F0_centre_j, Global_L_F0_centre, Global_L_F0_Backoff, 0]
 
@@ -109,6 +111,17 @@ def greet():
                 data = "r2"
                 send(data, 1)
                 break
+
+def get_HMI_Offset():
+    global HMI_offset
+    temp = 0.0
+    temp_str = send("r1,HMI,br_offset", 1)
+    temp_str = temp_str.strip("z")
+    tp_log(temp_str)
+    if 3 >= len(temp_str) > 1:
+        temp = float(temp_str)
+    HMI_offset = temp
+    time.sleep(1)
 
 def L_F1_deburr(ref_c, delta_x, delta_y, delta_z):
     L_F1_points = []
@@ -209,11 +222,17 @@ def deburr_L(ref_c):
     delta_y = delta[1]
     delta_z = delta[2]-5
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     L_F1_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F2_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F3_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F4_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F5_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F6_deburr(ref_c, delta_x, delta_y, delta_z)
     wait(0.5)
     release_force
@@ -319,11 +338,17 @@ def deburr_R(ref_c):
     delta_y = delta[1]
     delta_z = delta[2]-7
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     R_F1_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F2_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F3_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F4_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F5_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F6_deburr(ref_c, delta_x, delta_y, delta_z)
     wait(0.5)
     release_force
@@ -483,10 +508,6 @@ def receive_part():
             break
     #release_force()
     #release_compliance_ctrl()
-    if SIDE == "R":
-        send("r2,HMI,qsr", 0)
-    elif SIDE == "L":
-        send("r2,HMI,qsl", 0)
     movel(Global_handover_l, vel=handover_speed)
     movej(Global_handover_j)
     wait(1)
