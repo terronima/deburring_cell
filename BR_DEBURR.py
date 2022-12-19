@@ -146,12 +146,10 @@ def greet():
             break    
 
 def fn_th_HMI_Offset():
-
-    while True:
-        HMI_offset = send("r1,HMI,br_offset", 1)
-        time.sleep(1)
+    global HMI_offset
+    HMI_offset = float(send("r1,HMI,br_offset", 1))
+    time.sleep(1)
     
-
 
 # pick function to pick both L & R Parts
 def pick(pos):
@@ -788,7 +786,10 @@ def handover():
         done = send("", 2)
         #tp_popup("done: "+done, DR_PM_MESSAGE)
         if done == "done":
-            #set_digital_output(7, 0)
+            if SIDE == "R":
+                send("r1,HMI,qbr", 0)
+            elif SIDE == "L":
+                send("r1,HMI,qbl", 0)
             break
     movel(Global_handover_l, vel=100, acc=100)
     movej(Global_BR_HOME, vel=jmove_vel, acc=safe_acc)

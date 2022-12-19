@@ -69,6 +69,11 @@ while True:
                 elif PICK_MODE == "side_by_side":
                     pick_pos = side_by_side_MODE(pallet_map)
                 tp_log("Pallet pick pos " + str(pick_pos))
+                
+                if SIDE == "R":
+                    send("r1,HMI,start_LRR", 0)
+                elif SIDE == "L":
+                    send("r1,HMI,start_LRL", 0)
 
                 PICK_FLAG = pick(pick_pos)
                 #PICK_FLAG = 1
@@ -86,6 +91,11 @@ while True:
                         #pass
                     
                     handover()
+                
+                    if SIDE == "R":
+                        send("r1,HMI,stop_LRR", 0)
+                    elif SIDE == "L":
+                        send("r1,HMI,stop_LRL", 0)
                     
                 if SIDE == "R":
                     cntr = pick_pos
