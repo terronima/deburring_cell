@@ -1018,17 +1018,17 @@ class Ui_MainWindow(object):
             self.display_sr_wheel_stat()
             self.display_lr_wheel_stat()
             self.write_to_file()
-        if recv[0] == "t":
-            if recv[1] == "b":
-                if recv[2] == "r":
-                    self.LR_left_part_tmr.setText(f"{recv[3::]}")
-                elif recv[2] == "l":
-                    self.LR_right_part_tmr.setText(f"{recv[3::]}")
-            elif recv[1] == "s":
-                if recv[2] == "r":
-                    self.SR_left_part_tmr.setText(f"{recv[3::]}")
-                elif recv[2] == "l":
-                    self.SR_right_part_tmr.setText(f"{recv[3::]}")
+        # if recv[0] == "t":
+        #     if recv[1] == "b":
+        #         if recv[2] == "r":
+        #             self.LR_left_part_tmr.setText(f"{recv[3::]}")
+        #         elif recv[2] == "l":
+        #             self.LR_right_part_tmr.setText(f"{recv[3::]}")
+        #     elif recv[1] == "s":
+        #         if recv[2] == "r":
+        #             self.SR_left_part_tmr.setText(f"{recv[3::]}")
+        #         elif recv[2] == "l":
+        #             self.SR_right_part_tmr.setText(f"{recv[3::]}")
         if recv == "name":
             data = "HMI"
             self.send(f"{data}")
