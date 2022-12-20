@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
-
+import threading
 # Form implementation generated from reading ui file 'Robot_UI.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.4
@@ -49,6 +49,7 @@ def reconnect():
 class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(str)
+
     def run(self):
         """Long-running task."""
         recv = ""
@@ -69,6 +70,21 @@ class Worker(QObject):
         self.finished.emit()
 
 
+class WorkerThread(QThread):
+    name = ""
+    progress_tmr = pyqtSignal(float)
+    stop = 0
+    cntr = 0.0
+    def run(self):
+        while not self.stop:
+            self.cntr += 0.01
+            self.progress_tmr.emit(self.cntr)
+            time.sleep(0.1)
+
+    def stop_cnt(self):
+        self.stop = 1
+
+
 class Ui_MainWindow(object):
     active = True
     cycles = 0
@@ -76,10 +92,17 @@ class Ui_MainWindow(object):
     error_samples = {"no_parts_present": ("Please load more parts and hit start button.", "Empty table"),
                      "water_level_is_low": ("Please add more water into basin", "Low water level"),
                      "out_feed_table_is_full": ("Please remove parts from out feed table", "Out feed table is full")}
+
     def __init__(self):
+        self.LRL_thread_id = None
+        self.LRR_thread_id = None
+        self.SRL_thread_id = None
+        self.SRR_thread_id = None
+        self.cycle_timer_SR = None
+        self.millsec_sr = 0.0
+        self.millsec_br = 0.0
         self.robot_side = ""
-        self.millsec = 0
-        self.cycle_timer = None
+        self.cycle_timer_BR = None
         self.timer = None
         self.side = ""
         self.lr_r_part_cnt = 0
@@ -808,12 +831,6 @@ class Ui_MainWindow(object):
         self.display_sr_wheel_stat()
         # create a timer
         self.timer = QtCore.QTimer()
-        # run update function every 1000 milliseconds
-        # self.timer.timeout.connect(self.status_updates)
-        # self.timer.start(1500)
-        # create a cycle timer
-        self.cycle_timer = QtCore.QTimer()
-        self.cycle_timer.timeout.connect(self.count_cycle_time)
         # button trigger offset
         self.PB_BR_Off_UP.clicked.connect(lambda: self.extra_offset_BR(dir=1))
         self.PB_BR_Off_DOWN.clicked.connect(lambda: self.extra_offset_BR(dir=-1))
@@ -924,22 +941,39 @@ class Ui_MainWindow(object):
         self.thread.start()
 
     def start_timer(self):
-        self.cycle_timer.start(100)
-        self.millsec = 0
-
-    def stop_timer(self):
-        self.cycle_timer.stop()
-
-    def count_cycle_time(self):
-        self.millsec += 0.1
+        self.tm_worker = WorkerThread()
+        self.tm_worker.start()
+        # set function to track progress in the thread
         if self.robot_side == "start_LRL":
-            self.LR_left_part_tmr.setText(str("%.2f" % self.millsec))
+            self.LRL_thread_id = self.tm_worker.currentThreadId()
+            self.tm_worker.name = self.LRL_thread_id
+            self.tm_worker.progress_tmr.connect(self.count_cycle_time_brl)
         elif self.robot_side == "start_LRR":
-            self.LR_right_part_tmr.setText(str("%.2f" % self.millsec))
+            self.LRR_thread_id = self.tm_worker.currentThreadId()
+            self.tm_worker.progress_tmr.connect(self.count_cycle_time_brr)
         elif self.robot_side == "start_SRL":
-            self.SR_left_part_tmr.setText(str("%.2f" % self.millsec))
+            self.SRL_thread_id = self.tm_worker.currentThreadId()
+            self.tm_worker.progress_tmr.connect(self.count_cycle_time_srl)
         elif self.robot_side == "start_SRR":
-            self.SR_right_part_tmr.setText(str("%.2f" % self.millsec))
+            self.SRR_thread_id = self.tm_worker.currentThreadId()
+            self.tm_worker.progress_tmr.connect(self.count_cycle_time_srr)
+
+    def stop_timer(self, name):
+        # not yet finished the stop function
+        if self.tm_worker.name == name:
+            self.tm_worker.stop_cnt()
+
+    def count_cycle_time_brl(self, ms):
+        self.LR_left_part_tmr.setText(str("%.2f" % ms))
+
+    def count_cycle_time_brr(self, ms):
+        self.LR_right_part_tmr.setText(str("%.2f" % ms))
+
+    def count_cycle_time_srl(self, ms):
+        self.SR_left_part_tmr.setText(str("%.2f" % ms))
+
+    def count_cycle_time_srr(self, ms):
+        self.SR_right_part_tmr.setText(str("%.2f" % ms))
 
     def encode(self, enc_msg):
         message = enc_msg.encode(FORMAT)
@@ -998,23 +1032,23 @@ class Ui_MainWindow(object):
             self.send(f"HMI,r1,{self.PAUSE}")
         if recv[0] == "q":
             if recv[1] == "b":
-                if recv[2] == "r":
-                    br_prt_counter = int(self.LR_left_part_ctr.text())
-                    br_prt_counter += 1
-                    self.LR_left_part_ctr.setText(f"{br_prt_counter}")
-                elif recv[2] == "l":
-                    bl_prt_counter = int(self.LR_right_part_ctr.text())
+                if recv[2] == "l":
+                    bl_prt_counter = int(self.LR_left_part_ctr.text())
                     bl_prt_counter += 1
-                    self.LR_right_part_ctr.setText(f"{bl_prt_counter}")
+                    self.LR_left_part_ctr.setText(f"{bl_prt_counter}")
+                elif recv[2] == "r":
+                    br_prt_counter = int(self.LR_right_part_ctr.text())
+                    br_prt_counter += 1
+                    self.LR_right_part_ctr.setText(f"{br_prt_counter}")
             elif recv[1] == "s":
-                if recv[2] == "r":
-                    sr_prt_counter = int(self.SR_left_part_ctr.text())
-                    sr_prt_counter += 1
-                    self.SR_left_part_ctr.setText(f"{sr_prt_counter}")
-                elif recv[2] == "l":
-                    sl_prt_counter = int(self.SR_right_part_ctr.text())
+                if recv[2] == "l":
+                    sl_prt_counter = int(self.SR_left_part_ctr.text())
                     sl_prt_counter += 1
-                    self.SR_right_part_ctr.setText(f"{sl_prt_counter}")
+                    self.SR_left_part_ctr.setText(f"{sl_prt_counter}")
+                elif recv[2] == "r":
+                    sr_prt_counter = int(self.SR_right_part_ctr.text())
+                    sr_prt_counter += 1
+                    self.SR_right_part_ctr.setText(f"{sr_prt_counter}")
             self.display_sr_wheel_stat()
             self.display_lr_wheel_stat()
             self.write_to_file()
@@ -1089,7 +1123,6 @@ Small robot left parts produced: {self.SR_right_part_ctr.text()} '''
                 self.SR_Offset = -3.00
         self.SR_Offset = float(str("%.2f" % self.SR_Offset))
         self.SR_Offset_Val.setText(str("%.2f" % self.SR_Offset))
-
 
     def accumulated_part_count(self):
         today_time = QDateTime.currentDateTime()
