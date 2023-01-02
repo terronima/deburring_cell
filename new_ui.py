@@ -71,11 +71,11 @@ class Worker(QObject):
 
 
 class WorkerThread(QThread):
-    name = ""
     progress_tmr = pyqtSignal(float)
     stop = 0
     cntr = 0.0
     def run(self):
+        self.stop = 0
         while not self.stop:
             self.cntr += 0.01
             self.progress_tmr.emit(self.cntr)
@@ -94,6 +94,7 @@ class Ui_MainWindow(object):
                      "out_feed_table_is_full": ("Please remove parts from out feed table", "Out feed table is full")}
 
     def __init__(self):
+        self.timer_thread_list = []
         self.LRL_thread_id = None
         self.LRR_thread_id = None
         self.SRL_thread_id = None
@@ -940,13 +941,13 @@ class Ui_MainWindow(object):
         # Step 6: Start the thread
         self.thread.start()
 
-    def start_timer(self):
+    def start_timer(self, name):
         self.tm_worker = WorkerThread()
+        self.timer_thread_list.append((name, self.tm_worker))
         self.tm_worker.start()
         # set function to track progress in the thread
         if self.robot_side == "start_LRL":
             self.LRL_thread_id = self.tm_worker.currentThreadId()
-            self.tm_worker.name = self.LRL_thread_id
             self.tm_worker.progress_tmr.connect(self.count_cycle_time_brl)
         elif self.robot_side == "start_LRR":
             self.LRR_thread_id = self.tm_worker.currentThreadId()
@@ -957,11 +958,13 @@ class Ui_MainWindow(object):
         elif self.robot_side == "start_SRR":
             self.SRR_thread_id = self.tm_worker.currentThreadId()
             self.tm_worker.progress_tmr.connect(self.count_cycle_time_srr)
+        print(str(self.timer_thread_list))
 
     def stop_timer(self, name):
         # not yet finished the stop function
-        if self.tm_worker.name == name:
-            self.tm_worker.stop_cnt()
+        for thread in self.timer_thread_list:
+            if thread[0] == name:
+                thread[1].stop_cnt()
 
     def count_cycle_time_brl(self, ms):
         self.LR_left_part_tmr.setText(str("%.2f" % ms))
@@ -1013,9 +1016,9 @@ class Ui_MainWindow(object):
             self.trig_camera(recv)
         if recv in ["start_LRR", "start_LRL", "start_SRR", "start_SRL"]:
             self.robot_side = recv
-            self.start_timer()
+            self.start_timer(recv[5::])
         if recv in ["stop_LRR", "stop_LRL", "stop_SRR", "stop_SRL"]:
-            self.stop_timer()
+            self.stop_timer(recv[4::])
         if recv in self.error_samples:
             popup(text=self.error_samples[recv][0], title=self.error_samples[recv][1])
         if recv == "PICK_MODE":
