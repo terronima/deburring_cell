@@ -947,16 +947,12 @@ class Ui_MainWindow(object):
         self.tm_worker.start()
         # set function to track progress in the thread
         if self.robot_side == "start_LRL":
-            self.LRL_thread_id = self.tm_worker.currentThreadId()
             self.tm_worker.progress_tmr.connect(self.count_cycle_time_brl)
         elif self.robot_side == "start_LRR":
-            self.LRR_thread_id = self.tm_worker.currentThreadId()
             self.tm_worker.progress_tmr.connect(self.count_cycle_time_brr)
         elif self.robot_side == "start_SRL":
-            self.SRL_thread_id = self.tm_worker.currentThreadId()
             self.tm_worker.progress_tmr.connect(self.count_cycle_time_srl)
         elif self.robot_side == "start_SRR":
-            self.SRR_thread_id = self.tm_worker.currentThreadId()
             self.tm_worker.progress_tmr.connect(self.count_cycle_time_srr)
         print(self.timer_thread_list)
 
