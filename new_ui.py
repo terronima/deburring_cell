@@ -958,13 +958,15 @@ class Ui_MainWindow(object):
         elif self.robot_side == "start_SRR":
             self.SRR_thread_id = self.tm_worker.currentThreadId()
             self.tm_worker.progress_tmr.connect(self.count_cycle_time_srr)
-        print(str(self.timer_thread_list))
+        print(self.timer_thread_list)
 
     def stop_timer(self, name):
         # not yet finished the stop function
         for thread in self.timer_thread_list:
             if thread[0] == name:
                 thread[1].stop_cnt()
+                self.timer_thread_list.remove(thread)
+                print(self.timer_thread_list)
 
     def count_cycle_time_brl(self, ms):
         self.LR_left_part_tmr.setText(str("%.2f" % ms))
