@@ -1,9 +1,9 @@
 GREET = 0
-SIDE = "R"
+SIDE = "L"
 
 if get_digital_input(PART_PRESENT_SENSOR):
-    Estop_recovery()
-    wait(1)
+   Estop_recovery()
+   wait(1)
 
 # greet the server and establish connection
 tp_log("Now greeting...")
@@ -22,10 +22,10 @@ while True:
     set_digital_output(DEBURR_MOTOR, START)
     if SIDE == "L":
         deburr_L(L_COORD_SYS)
-        #pass
+        # pass
     elif SIDE == "R":
         deburr_R(R_COORD_SYS)
-        #pass
+        # pass
     set_digital_output(DEBURR_MOTOR, STOP)
     if not get_digital_input(WATER_LEVEL_SENSOR):
         dip_part()
@@ -33,6 +33,8 @@ while True:
         send("r2,HMI,r2_faulted", 0)
     place()
     if SIDE == "R":
-        send("r2,HMI,stop_SRR", 0)
+       send("r2,HMI,qsr", 0)
+       send("r2,HMI,stop_SRR", 0)
     elif SIDE == "L":
-        send("r2,HMI,stop_SRL", 0)
+       send("r2,HMI,qsl", 0)
+       send("r2,HMI,stop_SRL", 0)

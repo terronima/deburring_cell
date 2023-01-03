@@ -6,8 +6,8 @@ HEADER = 64
 PORT = 12347
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
-SERVER = "localhost"
-# SERVER = "192.168.1.10"
+# SERVER = "localhost"
+SERVER = "192.168.1.9"
 ADDR = (SERVER, PORT)
 RESPOND = "ready_to_transfer"
 

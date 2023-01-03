@@ -36,6 +36,8 @@ set_tool("R_Part")
 SIDE = ""
 camera_map = ""
 
+HMI_offset = 0.0
+
 # List of point for L Part faces
 L_F0 = [Global_L_F0_centre_j, Global_L_F0_centre, Global_L_F0_Backoff, 0]
 
@@ -112,6 +114,18 @@ def greet():
             data = "r2"
             send(data, 1)
             break
+
+
+def get_HMI_Offset():
+    global HMI_offset
+    temp = 0.0
+    temp_str = send("r1,HMI,br_offset", 1)
+    temp_str = temp_str.strip("z")
+    tp_log(temp_str)
+    if 3 >= len(temp_str) > 1:
+        temp = float(temp_str)
+    HMI_offset = temp
+    time.sleep(1)
 
 
 def L_F1_deburr(ref_c, delta_x, delta_y, delta_z):
@@ -222,11 +236,17 @@ def deburr_L(ref_c):
     delta_y = delta[1]
     delta_z = delta[2] - 5
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     L_F1_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F2_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F3_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F4_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F5_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F6_deburr(ref_c, delta_x, delta_y, delta_z)
     wait(0.5)
     release_force
@@ -342,11 +362,17 @@ def deburr_R(ref_c):
     delta_y = delta[1]
     delta_z = delta[2] - 7
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     R_F1_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F2_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F3_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F4_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F5_deburr(ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F6_deburr(ref_c, delta_x, delta_y, delta_z)
     wait(0.5)
     release_force
@@ -373,26 +399,27 @@ def dip_part():
 
 
 def place():
+    # place part logic, define variables.
     global SIDE
     pallet_map = None
     place_speed = 25
     stiffness = [500, 500, 500, 1000, 1000, 1000]
-    force_desired = 50.0  # set desired force
+    force_desired = 10.0  # set desired force
     f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]  # set force direction
     f_dir = [0, 0, 1, 0, 0, 0]  # set axis at which force would be applied (x, y, z, a, b, c)
-    while True:
+    while True:  # get string of positions from camera, by requesting data through server
         pallet_map = send("r2,cam,r2_send_cam_data", 1)
         if (len(pallet_map)) == 18:
             break
         time.sleep(0.5)
-    set_velx(225, 225)
-    set_accx(300, 300)
+    set_velx(225, 225)  # set movel speed parameters
+    set_accx(300, 300)  # set movel acceleration parameters
     tp_log(str(pallet_map))
     cntr = 0
     pallet_place = None
-    side_l = 0
-    side_j = 0
-    ref_c = 0
+    side_l = 0  # first position coordinate on the pallet for linear move
+    side_j = 0  # first position coordinate on the pallet for joint move
+    ref_c = 0  # referencecoordinate system, for right or left part
     if SIDE == "L":
         ref_c = SR_L_PALLET_COORD
         side_l = Global_place_L_l
@@ -401,37 +428,45 @@ def place():
         ref_c = SR_R_PALLET_COORD
         side_l = Global_place_R_l
         side_j = Global_place_R_j
-    for i in pallet_map:
-        if SIDE == "R" and cntr < len(pallet_map) // 2:
+    for i in pallet_map:  # detecting an empty spot on the pallet, extracting its number, so robot will placepart in correct spot
+        if SIDE == "R" and cntr >= len(
+                pallet_map) // 2:  # if side is right, and position counter (iterates throug the string positions) greater or equal 9
             p = int(i)
             tp_log("p is: " + str(p) + ", cntr is" + str(cntr))
             if p == 0:
-                pallet_place = cntr
+                pallet_place = cntr - 9  # place part on the right side of the pallet,  in defined position
                 break
-        elif SIDE == "L" and cntr >= len(pallet_map) // 2:
+        elif SIDE == "L" and cntr < len(
+                pallet_map) // 2:  # same as right, but for elements positions below 9 (from camera string)
             p = int(i)
             if p == 0:
-                pallet_place = cntr - 9
+                pallet_place = cntr
                 break
         cntr += 1
     tp_log("pallet_place: " + str(pallet_place))
-    y = 160 * (pallet_place // 3)
-    x = -140 * (pallet_place % 3)
-    place_above = trans(side_l, [x, y, 100, 0, 0, 0])
+    # offset logic. basedon position, part will be offset from zero position
+    y = 160 * (pallet_place // 3)  # step in x direction is 160mm
+    x = -140 * (pallet_place % 3)  # step in y direction is 140mm
+    place_above = trans(side_l, [x, y, 100, 0, 0, 0])  # offset z direction above the desiredposition by 100mm
     place = trans(side_l, [x, y, 0, 0, 0, 0])
-    place_above = coord_transform(place_above, ref_c, DR_BASE)
+    place_above = coord_transform(place_above, ref_c,
+                                  DR_BASE)  # transform coordinates of chosen position into base coordinate system
     place = coord_transform(place, ref_c, DR_BASE)
     movej(Global_SR_HOME_j)
     movej(side_j)
     movel(place_above)
     movel(place, vel=place_speed)
+    # enable compliance and force control
     task_compliance_ctrl(stiffness)
     set_desired_force(f_d, f_dir)
-    wait(2)
+    wait(1)
+    # release the part
     set_digital_output(AIRBLOW_OUTPUT, HIGH)
     wait(1)
+    # disable compliance and force control
     release_force()
     release_compliance_ctrl()
+    # movel above drop position
     movel(place_above)
     tp_log(str(place_above))
 
@@ -509,10 +544,6 @@ def receive_part():
             break
     # release_force()
     # release_compliance_ctrl()
-    if SIDE == "R":
-        send("r2,HMI,qsr", 0)
-    elif SIDE == "L":
-        send("r2,HMI,qsl", 0)
     movel(Global_handover_l, vel=handover_speed)
     movej(Global_handover_j)
     wait(1)

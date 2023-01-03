@@ -74,12 +74,15 @@ class WorkerThread(QThread):
     progress_tmr = pyqtSignal(float)
     stop = 0
     cntr = 0.0
+
     def run(self):
         self.stop = 0
         while not self.stop:
             self.cntr += 0.01
             self.progress_tmr.emit(self.cntr)
-            time.sleep(0.1)
+            time.sleep(0.01)
+            if self.cntr > 300.0:
+                self.stop_cnt()
 
     def stop_cnt(self):
         self.stop = 1
@@ -115,7 +118,7 @@ class Ui_MainWindow(object):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1034, 740)
+        MainWindow.resize(1900, 1000)
         MainWindow.setStyleSheet("")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet(

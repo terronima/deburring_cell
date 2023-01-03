@@ -24,7 +24,7 @@ PART_PRESENT_SENSOR = 11
 
 # Global variables
 Global_standby = posj(-141.6, -0.31, 142.12, 2.05, 37.75, -141.84)
-HMI_Offset = ""
+HMI_offset = 0.0
 
 # Global_Pick_L_j = posj(-138.03, 48.20, 91.53, 0.59, 38.24, -137.18)
 
@@ -157,19 +157,25 @@ def greet():
             greet()
         if received == "name":
             data = "r1"
-            send(data, 0)
+            send(data, 1)
             break
 
 
-def fn_th_HMI_Offset():
+def get_HMI_Offset():
     global HMI_offset
-    HMI_offset = float(send("r1,HMI,br_offset", 1))
+    temp = 0.0
+    temp_str = send("r1,HMI,br_offset", 1)
+    temp_str = temp_str.strip("z")
+    tp_log(temp_str)
+    if 3 >= len(temp_str) > 1:
+        temp = float(temp_str)
+    HMI_offset = temp
     time.sleep(1)
 
 
 # pick function to pick both L & R Parts
 def pick(pos):
-    tp_log("poaition: " + str(pos))
+    tp_log("position: " + str(pos))
     tp_log("SIDE is " + str(SIDE))
     pallet_place = int(pos)
     side_l = None
@@ -177,62 +183,34 @@ def pick(pos):
     delta_x = None
     delta_y = None
     ref_c = None
-
-    if (SIDE == "R" and pallet_place == 0):
-        amovej(Global_pick_R_0_above_j, vel=jmove_vel, acc=pick_acc)
+    j_pos_list = [(Global_pick_L_0_above_j, Global_pick_L_0_j), (Global_pick_L_1_above_j, Global_pick_L_1_j), (Global_pick_L_2_above_j, Global_pick_L_2_j)]
+    if (SIDE == "L" and pallet_place in [0, 1, 2]):  # for first 3 pick pos, to avoid singularity
+        amovej(j_pos_list[pallet_place][0], vel=jmove_vel, acc=pick_acc)
         mwait(0.5)
         set_digital_output(AIRBLOW_OUTPUT, 1)
         if get_digital_input(GRIPPER_CLOSE) == 1:
-            movej(Global_pick_R_0_j, vel=convergence_j_vel, acc=convergence_acc)
+            movej(j_pos_list[pallet_place][1], vel=convergence_j_vel, acc=convergence_acc)
         else:
             set_digital_output(AIRBLOW_OUTPUT, 1)
-            movej(Global_pick_R_0_j, vel=convergence_j_vel, acc=convergence_acc)
+            movej(j_pos_list[pallet_place][1], vel=convergence_j_vel, acc=convergence_acc)
         wait(2)
         if get_digital_input(PART_PRESENT_SENSOR):
             set_digital_output(AIRBLOW_OUTPUT, 0)
             if get_digital_input(GRIPPER_OPEN) == 1:
-                movej(Global_pick_R_0_above_j, vel=convergence_j_vel, acc=convergence_acc)
+                movej(j_pos_list[pallet_place][0], vel=convergence_j_vel, acc=convergence_acc)
                 movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
             else:
                 set_digital_output(AIRBLOW_OUTPUT, 0)
                 wait(0.5)
-                movej(Global_pick_R_0_above_j, vel=convergence_j_vel, acc=convergence_acc)
+                movej(j_pos_list[pallet_place][0], vel=convergence_j_vel, acc=convergence_acc)
                 movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
             PICK_FLAG = 1
         else:
-            movej(Global_pick_R_0_above_j, vel=convergence_j_vel, acc=convergence_acc)
+            movej(j_pos_list[pallet_place][0], vel=convergence_j_vel, acc=convergence_acc)
             movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
             PICK_FLAG = 0
-
-
-    elif (SIDE == "R" and pallet_place == 1):
-        amovej(Global_pick_R_1_above_j, vel=jmove_vel, acc=pick_acc)
-        mwait(0.5)
-        set_digital_output(AIRBLOW_OUTPUT, 1)
-        if get_digital_input(GRIPPER_CLOSE) == 1:
-            movej(Global_pick_R_1_j, vel=convergence_j_vel, acc=convergence_acc)
-        else:
-            set_digital_output(AIRBLOW_OUTPUT, 1)
-            movej(Global_pick_R_1_j, vel=convergence_j_vel, acc=convergence_acc)
-        wait(2)
-        if get_digital_input(PART_PRESENT_SENSOR):
-            set_digital_output(AIRBLOW_OUTPUT, 0)
-            if get_digital_input(GRIPPER_OPEN) == 1:
-                movej(Global_pick_R_1_above_j, vel=convergence_j_vel, acc=convergence_acc)
-                movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
-            else:
-                set_digital_output(AIRBLOW_OUTPUT, 0)
-                wait(0.5)
-                movej(Global_pick_R_1_above_j, vel=convergence_j_vel, acc=convergence_acc)
-                movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
-            PICK_FLAG = 1
-        else:
-            movej(Global_pick_R_1_above_j, vel=convergence_j_vel, acc=convergence_acc)
-            movej(Global_BR_HOME, vel=jmove_vel, acc=pick_acc)
-            PICK_FLAG = 0
-
-
     else:
+    # if True:
         # assign required parameters for pick process
         if SIDE == "L":  # if L then sets the picking position of L pallet
             ref_c = BR_L_PALLET_USR_CORD
@@ -262,18 +240,18 @@ def pick(pos):
         else:
             set_digital_output(AIRBLOW_OUTPUT, 1)
             movel(pick_pos, vel=convergence_vel, acc=convergence_acc)
-        k_d = [500.0, 500.0, 500.0, 200.0, 200.0, 200.0]
+        k_d = [200.0, 200.0, 200.0, 200.0, 200.0, 200.0]
         task_compliance_ctrl(k_d)
         force_desired = 10.0
         f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]
         f_dir = [0, 0, 1, 0, 0, 0]
         set_desired_force(f_d, f_dir)
-        force_check = 10.0
-        while True:
+        #force_check = 10.0
+        #while True:
             # wait(3)
-            force_condition = check_force_condition(DR_AXIS_Z, max=force_check)
-            if get_digital_input(11) == 0:
-                break
+         #   force_condition = check_force_condition(DR_AXIS_Z, max=force_check)
+        #    if get_digital_input(11) == 0:
+          #      break
         wait(3)
         release_force()
         release_compliance_ctrl()
@@ -297,7 +275,7 @@ def pick(pos):
 
 
 def L_F1_deburr(L_F1, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 10
+    delta_z -= 8.5
     delta_z += HMI_offset
     L_F1_points = []
     movej(Global_L_F1_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -312,7 +290,7 @@ def L_F1_deburr(L_F1, ref_c, delta_x, delta_y, delta_z):
 
 
 def L_F2_deburr(L_F2, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 10
+    delta_z -= 11.5
     delta_z += HMI_offset
     L_F2_points = []
     movej(Global_L_F2_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -327,7 +305,7 @@ def L_F2_deburr(L_F2, ref_c, delta_x, delta_y, delta_z):
 
 
 def L_F3_deburr(L_F3, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 11
+    delta_z -= 10
     delta_z += HMI_offset
     L_F3_points = []
     movej(Global_L_F3_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -347,7 +325,7 @@ def L_F3_deburr(L_F3, ref_c, delta_x, delta_y, delta_z):
 
 
 def L_F5_deburr(L_F5, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 11
+    delta_z -= 13
     delta_z += HMI_offset
     L_F5_points = []
     movej(Global_L_F5_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -367,7 +345,7 @@ def L_F5_deburr(L_F5, ref_c, delta_x, delta_y, delta_z):
 
 
 def L_F7_deburr(L_F7, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 12
+    delta_z -= 10
     delta_z += HMI_offset
     L_F7_points = []
     movej(Global_L_F7_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -381,7 +359,7 @@ def L_F7_deburr(L_F7, ref_c, delta_x, delta_y, delta_z):
 
 
 def L_F8_deburr(L_F8, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 11
+    delta_z -= 13
     delta_z += HMI_offset
     L_F8_points = []
     movej(Global_L_F8_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -395,7 +373,7 @@ def L_F8_deburr(L_F8, ref_c, delta_x, delta_y, delta_z):
 
 
 def L_F6_deburr(L_F6, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 11
+    delta_z -= 10
     delta_z += HMI_offset
     L_F6_points = []
     movej(Global_L_F6_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -415,7 +393,7 @@ def L_F6_deburr(L_F6, ref_c, delta_x, delta_y, delta_z):
 
 
 def L_F4_deburr(L_F4, ref_c, delta_x, delta_y, delta_z):
-    delta_z -= 11
+    delta_z -= 13
     delta_z += HMI_offset
     L_F4_points = []
     movej(Global_L_F4_centre_j, vel=jmove_vel, acc=safe_acc)
@@ -473,11 +451,15 @@ def deburr_L_B1(ref_c):
     tp_log("delta_y: " + str(delta_y))
     tp_log("delta_z: " + str(delta_z))
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     L_F1_deburr(L_F1, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F3_deburr(L_F3, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F6_deburr(L_F6, ref_c, delta_x, delta_y, delta_z)
 
     set_ref_coord(R_1_COORD_SYS)
+    get_HMI_Offset()
     L_F7_deburr(L_F7, R_1_COORD_SYS, delta_x, delta_y, delta_z)
     wait(0.5)
     set_digital_output(RIGHT_MOTOR, 0)
@@ -520,11 +502,15 @@ def deburr_L_B2(ref_c):
     delta_y = delta[1]
     delta_z = delta[2]
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     L_F5_deburr(L_F5, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F4_deburr(L_F4, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     L_F2_deburr(L_F2, ref_c, delta_x, delta_y, delta_z)
 
     set_ref_coord(L_2_COORD_SYS)
+    get_HMI_Offset()
     L_F8_deburr(L_F8, L_2_COORD_SYS, delta_x, delta_y, delta_z)
     wait(0.5)
     set_digital_output(RIGHT_MOTOR, 0)
@@ -740,12 +726,17 @@ def deburr_R_B1(ref_c):
     tp_log("delta_y: " + str(delta_y))
     tp_log("delta_z: " + str(delta_z))
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     R_F1_deburr(R_F1, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F2_deburr(R_F2, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F3_deburr(R_F3, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F5_deburr(R_F5, ref_c, delta_x, delta_y, delta_z)
 
     set_ref_coord(R_1_COORD_SYS)
+    get_HMI_Offset()
     R_F7_deburr(R_F7, R_1_COORD_SYS, delta_x, delta_y, delta_z)
     wait(0.5)
     set_digital_output(RIGHT_MOTOR, 0)
@@ -790,10 +781,13 @@ def deburr_R_B2(ref_c):
     delta_y = delta[1]
     delta_z = delta[2]
     set_ref_coord(ref_c)
+    get_HMI_Offset()
     R_F6_deburr(R_F6, ref_c, delta_x, delta_y, delta_z)
+    get_HMI_Offset()
     R_F4_deburr(R_F4, ref_c, delta_x, delta_y, delta_z)
 
     set_ref_coord(L_2_COORD_SYS)
+    get_HMI_Offset()
     R_F8_deburr(R_F8, L_2_COORD_SYS, delta_x, delta_y, delta_z)
     wait(0.5)
     set_digital_output(RIGHT_MOTOR, 0)
@@ -854,9 +848,9 @@ def Estop_recovery():
     move_home(DR_HOME_TARGET_USER)
 
 
-def left_only_MODE(pallet_map):
+def right_only_MODE(pallet_map):
     global SIDE
-    SIDE = "L"
+    SIDE = "R"
     cntr = 9
     for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
         if pallet_map[i] == 1:
@@ -865,9 +859,9 @@ def left_only_MODE(pallet_map):
         cntr += 1
 
 
-def right_only_MODE(pallet_map):
+def left_only_MODE(pallet_map):
     global SIDE
-    SIDE = "R"
+    SIDE = "L"
     cntr = 0
     for i in range(0, int(len(pallet_map[0:9]))):
         if pallet_map[i] == 1:
@@ -882,13 +876,13 @@ def intermittent_MODE(pallet_map):
     for i in range(0, int(len(pallet_map[0:9]))):
         pick_el_1 = i
         if pallet_map[pick_el_1] == 1:
-            SIDE = "R"
+            SIDE = "L"
             pallet_place = cntr
             return pallet_place
             # string_of_picks += str(i) + ','
         pick_el_2 = i + int(len(pallet_map) / 2)
         if pallet_map[pick_el_2] == 1:
-            SIDE = "L"
+            SIDE = "R"
             pallet_place = cntr
             return pallet_place
         cntr += 1
@@ -900,14 +894,14 @@ def side_by_side_MODE(pallet_map):
     cntr = 0
     for i in range(0, int(len(pallet_map[0:9]))):
         if pallet_map[i] == 1:
-            SIDE = "R"
+            SIDE = "L"
             pallet_place = cntr
             return pallet_place
         cntr += 1
         if cntr >= 9:
             for i in range(int(len(pallet_map[9::])), int(len(pallet_map))):
                 if pallet_map[i] == 1:
-                    SIDE = "L"
+                    SIDE = "R"
                     pallet_place = cntr - 9
                     return pallet_place
                 cntr += 1
