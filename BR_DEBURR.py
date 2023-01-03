@@ -44,7 +44,6 @@ set_tool("right part")
 SIDE = ""
 camera_map = ""
 PICK_MODE = ""
-PICK_FLAG = 0
 
 # global pallet_place
 
@@ -175,6 +174,7 @@ def get_HMI_Offset():
 
 # pick function to pick both L & R Parts
 def pick(pos):
+    PICK_FLAG = 0
     tp_log("position: " + str(pos))
     tp_log("SIDE is " + str(SIDE))
     pallet_place = int(pos)
@@ -240,7 +240,7 @@ def pick(pos):
         else:
             set_digital_output(AIRBLOW_OUTPUT, 1)
             movel(pick_pos, vel=convergence_vel, acc=convergence_acc)
-        k_d = [200.0, 200.0, 200.0, 200.0, 200.0, 200.0]
+        k_d = [500.0, 500.0, 500.0, 200.0, 200.0, 200.0]
         task_compliance_ctrl(k_d)
         force_desired = 10.0
         f_d = [0.0, 0.0, -force_desired, 0.0, 0.0, 0.0]
@@ -520,7 +520,7 @@ def deburr_L_B2(ref_c):
 
 def R_F1_deburr(R_F1, ref_c, delta_x, delta_y, delta_z):
     R_F1_points = []
-    delta_z -= 10
+    delta_z -= 9
     delta_z += HMI_offset
     tp_log("delta_x: " + str(delta_x))
     tp_log("delta_y: " + str(delta_y))
@@ -550,15 +550,15 @@ def R_F1_deburr(R_F1, ref_c, delta_x, delta_y, delta_z):
 
 def R_F2_deburr(R_F2, ref_c, delta_x, delta_y, delta_z):
     R_F2_points = []
-    delta_z -= 10
+    delta_z -= 9
     delta_z += HMI_offset
     movej(Global_R_F2_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F2)):
         R_Face_point = trans(R_F2[i], [delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
         R_F2_points.append(R_Face_point)
     movel(R_F2_points[0], vel=lmove_vel, acc=safe_acc)
-    movesx([R_F2_points[1], R_F2_points[2], R_F2_points[3], R_F2_points[4], R_F2_points[5], R_F2_points[6],
-            R_F2_points[7]], vel=deburr_vel, acc=deburr_acc)
+    movesx([R_F2_points[1], R_F2_points[2], R_F2_points[3], R_F2_points[4], R_F2_points[5], R_F2_points[6]], vel=deburr_vel, acc=deburr_acc)
+    # R_F2_points[7]
     # movel(R_F2_points[1], vel=lmove_vel, acc=safe_acc)
     # movel(R_F2_points[2], vel=lmove_vel, acc=safe_acc, r=35, ra=DR_MV_RA_DUPLICATE)
     # movel(R_F2_points[3], vel=lmove_vel, acc=safe_acc, r=35, ra=DR_MV_RA_DUPLICATE)
@@ -570,7 +570,7 @@ def R_F2_deburr(R_F2, ref_c, delta_x, delta_y, delta_z):
 
 def R_F3_deburr(R_F3, ref_c, delta_x, delta_y, delta_z):
     R_F3_points = []
-    delta_z -= 11
+    delta_z -= 10.5
     delta_z += HMI_offset
     movej(Global_R_F3_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F3)):
@@ -591,7 +591,7 @@ def R_F3_deburr(R_F3, ref_c, delta_x, delta_y, delta_z):
 
 def R_F5_deburr(R_F5, ref_c, delta_x, delta_y, delta_z):
     R_F5_points = []
-    delta_z -= 11
+    delta_z -= 10.5
     delta_z += HMI_offset
     movej(Global_R_F5_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F5)):
@@ -613,7 +613,7 @@ def R_F5_deburr(R_F5, ref_c, delta_x, delta_y, delta_z):
 
 def R_F7_deburr(R_F7, ref_c, delta_x, delta_y, delta_z):
     R_F7_points = []
-    delta_z -= 11
+    delta_z -= 10.5
     delta_z += HMI_offset
     movej(Global_R_F7_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F7)):
@@ -628,7 +628,7 @@ def R_F7_deburr(R_F7, ref_c, delta_x, delta_y, delta_z):
 
 def R_F6_deburr(R_F6, ref_c, delta_x, delta_y, delta_z):
     R_F6_points = []
-    delta_z -= 11.5
+    delta_z -= 10
     delta_z += HMI_offset
     movej(Global_R_F6_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F6)):
@@ -651,7 +651,7 @@ def R_F6_deburr(R_F6, ref_c, delta_x, delta_y, delta_z):
 
 def R_F4_deburr(R_F4, ref_c, delta_x, delta_y, delta_z):
     R_F4_points = []
-    delta_z -= 11
+    delta_z -= 9.5
     delta_z += HMI_offset
     movej(Global_R_F4_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F4)):
@@ -673,7 +673,7 @@ def R_F4_deburr(R_F4, ref_c, delta_x, delta_y, delta_z):
 
 def R_F8_deburr(R_F8, ref_c, delta_x, delta_y, delta_z):
     R_F8_points = []
-    delta_z -= 12
+    delta_z -= 10
     delta_z += HMI_offset
     movej(Global_R_F8_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F8)):
