@@ -87,11 +87,13 @@ while True:
                         deburr_L_B2(L_BRUSH_COORD_SYS)
                         # stop processing timer
                         send("r1,HMI,stop_LRL", 0)
+                        send("r1,HMI,stop_LRL", 0)
                         # pass
                     elif SIDE == "R":
                         deburr_R_B1(R_BRUSH_COORD_SYS)
                         deburr_R_B2(L_BRUSH_COORD_SYS)
                         # stop processing timer
+                        send("r1,HMI,stop_LRR", 0)
                         send("r1,HMI,stop_LRR", 0)
                         # pass
 

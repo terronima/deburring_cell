@@ -145,6 +145,8 @@ def greet():
     global PAUSE
     global PICK_MODE
     global client
+    set_digital_output(LEFT_MOTOR, 0)
+    set_digital_output(RIGHT_MOTOR, 0)
     received = ""
     while True:
         try:
@@ -424,7 +426,7 @@ def deburr_L_B1(ref_c):
     set_ref_coord(ref_c)
     movel(Global_L_B1_Reference, vel=lmove_vel, acc=safe_acc)
     wait(1)
-    k_d1 = [1500.0, 1500.0, 1500.0, 1000.0, 1000.0, 1000.0]
+    k_d1 = [3000.0, 3000.0, 3000.0, 2000.0, 2000.0, 2000.0]
     task_compliance_ctrl(k_d1)
     force_desired = 20
     f_d = [0.0, 0.0, force_desired, 0.0, 0.0, 0.0]
@@ -478,7 +480,7 @@ def deburr_L_B2(ref_c):
     mwait(0)
     set_ref_coord(ref_c)
     movel(Global_L_B2_Reference, vel=lmove_vel, acc=safe_acc)
-    k_d1 = [1500.0, 1500.0, 1500.0, 1000.0, 1000.0, 1000.0]
+    k_d1 = [3000.0, 3000.0, 3000.0, 2000.0, 2000.0, 2000.0]
     task_compliance_ctrl(k_d1)
     force_desired = 20
     f_d = [0.0, 0.0, force_desired, 0.0, 0.0, 0.0]
@@ -520,7 +522,7 @@ def deburr_L_B2(ref_c):
 
 def R_F1_deburr(R_F1, ref_c, delta_x, delta_y, delta_z):
     R_F1_points = []
-    delta_z -= 9
+    delta_z -= 8.7
     delta_z += HMI_offset
     tp_log("delta_x: " + str(delta_x))
     tp_log("delta_y: " + str(delta_y))
@@ -550,7 +552,7 @@ def R_F1_deburr(R_F1, ref_c, delta_x, delta_y, delta_z):
 
 def R_F2_deburr(R_F2, ref_c, delta_x, delta_y, delta_z):
     R_F2_points = []
-    delta_z -= 9
+    delta_z -= 8.7
     delta_z += HMI_offset
     movej(Global_R_F2_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F2)):
@@ -564,13 +566,13 @@ def R_F2_deburr(R_F2, ref_c, delta_x, delta_y, delta_z):
     # movel(R_F2_points[3], vel=lmove_vel, acc=safe_acc, r=35, ra=DR_MV_RA_DUPLICATE)
     # movel(R_F2_points[4], vel=lmove_vel, acc=safe_acc)
     # movec(R_F2_points[1], R_F2_points[2], vel=deburr_vel, acc=deburr_acc, ori = DR_MV_ORI_TEACH)
-    amovel(Global_R_F2_Backoff, vel=lmove_vel, acc=safe_acc)
+    movel(Global_R_F2_Backoff, vel=lmove_vel, acc=safe_acc)
     mwait(0)
 
 
 def R_F3_deburr(R_F3, ref_c, delta_x, delta_y, delta_z):
     R_F3_points = []
-    delta_z -= 10.5
+    delta_z -= 10.2
     delta_z += HMI_offset
     movej(Global_R_F3_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F3)):
@@ -591,21 +593,22 @@ def R_F3_deburr(R_F3, ref_c, delta_x, delta_y, delta_z):
 
 def R_F5_deburr(R_F5, ref_c, delta_x, delta_y, delta_z):
     R_F5_points = []
-    delta_z -= 10.5
+    delta_z -= 9.1
     delta_z += HMI_offset
     movej(Global_R_F5_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F5)):
         R_Face_point = trans(R_F5[i], [delta_x + 1, 0, delta_z - 1, 0, 0, 0], ref_c, ref_c)
         R_F5_points.append(R_Face_point)
     movel(R_F5_points[0], vel=lmove_vel, acc=safe_acc)
-    movel(R_F5_points[1], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F5_points[2], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F5_points[3], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F5_points[4], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F5_points[5], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F5_points[6], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F5_points[7], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F5_points[8], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    movel(R_F5_points[1], vel=lmove_vel, acc=safe_acc)
+    movesx([R_F5_points[2], R_F5_points[3], R_F5_points[4], R_F5_points[5], R_F5_points[6], R_F5_points[7],
+            R_F5_points[8]], vel=deburr_vel, acc=deburr_acc)
+    #movel(R_F5_points[3], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F5_points[4], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F5_points[5], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F5_points[6], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F5_points[7], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F5_points[8], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
     # movec(R_F5_points[2], R_F5_points[3], vel=deburr_vel, acc=deburr_acc, ori = DR_MV_ORI_RADIAL)
     amovel(Global_R_F5_Backoff, vel=lmove_vel, acc=safe_acc)
     mwait(0)
@@ -613,7 +616,7 @@ def R_F5_deburr(R_F5, ref_c, delta_x, delta_y, delta_z):
 
 def R_F7_deburr(R_F7, ref_c, delta_x, delta_y, delta_z):
     R_F7_points = []
-    delta_z -= 10.5
+    delta_z -= 10.2
     delta_z += HMI_offset
     movej(Global_R_F7_centre_j, vel=jmove_vel, acc=safe_acc)
     for i in range(0, len(R_F7)):
@@ -636,14 +639,15 @@ def R_F6_deburr(R_F6, ref_c, delta_x, delta_y, delta_z):
         R_F6_points.append(R_Face_point)
     movel(R_F6_points[0], vel=lmove_vel, acc=safe_acc)
     # movesx([R_F6_points[1], R_F6_points[2], R_F6_points[3], R_F6_points[4], R_F6_points[5], R_F6_points[6], R_F6_points[7], R_F6_points[8]], vel=deburr_vel, acc=deburr_acc)
-    movel(R_F6_points[1], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F6_points[2], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F6_points[3], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F6_points[4], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F6_points[5], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F6_points[6], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F6_points[7], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F6_points[8], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    movel(R_F6_points[1], vel=lmove_vel, acc=safe_acc)
+    movesx([R_F6_points[1], R_F6_points[2], R_F6_points[3], R_F6_points[4], R_F6_points[5], R_F6_points[6], R_F6_points[7], R_F6_points[8]], vel=lmove_vel, acc=safe_acc)
+    #movel(R_F6_points[2], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F6_points[3], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F6_points[4], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F6_points[5], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F6_points[6], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F6_points[7], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F6_points[8], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
     # movec(R_F6_points[2], R_F6_points[3], vel=deburr_vel, acc=deburr_acc, ori = DR_MV_ORI_TEACH)
     amovel(Global_R_F6_Backoff, vel=lmove_vel, acc=safe_acc)
     mwait(0)
@@ -658,14 +662,16 @@ def R_F4_deburr(R_F4, ref_c, delta_x, delta_y, delta_z):
         R_Face_point = trans(R_F4[i], [delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
         R_F4_points.append(R_Face_point)
     movel(R_F4_points[0], vel=lmove_vel, acc=safe_acc)
-    movel(R_F4_points[1], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F4_points[2], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F4_points[3], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F4_points[4], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F4_points[5], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F4_points[6], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F4_points[7], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
-    movel(R_F4_points[8], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    movel(R_F4_points[1], vel=lmove_vel, acc=safe_acc)
+    movesx([R_F4_points[1], R_F4_points[2], R_F4_points[3], R_F4_points[4], R_F4_points[5], R_F4_points[6], R_F4_points[7], R_F4_points[8], ], vel=lmove_vel, acc=safe_acc)
+    #movel(R_F4_points[1], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F4_points[2], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F4_points[3], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F4_points[4], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F4_points[5], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F4_points[6], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F4_points[7], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
+    #movel(R_F4_points[8], vel=lmove_vel, acc=safe_acc, r=20, ra=DR_MV_RA_DUPLICATE)
     # movec(R_F4_points[2], R_F4_points[3], vel=deburr_vel, acc=deburr_acc, ori = DR_MV_ORI_TEACH)
     amovel(Global_R_F4_Backoff, vel=lmove_vel, acc=safe_acc)
     mwait(0)
@@ -680,8 +686,9 @@ def R_F8_deburr(R_F8, ref_c, delta_x, delta_y, delta_z):
         R_Face_point = trans(R_F8[i], [delta_x, delta_y, delta_z, 0, 0, 0], ref_c, ref_c)
         R_F8_points.append(R_Face_point)
     movel(R_F8_points[0], vel=lmove_vel, acc=safe_acc)
-    movec(R_F8_points[1], R_F8_points[2], vel=deburr_vel, acc=deburr_acc)
-    movec(R_F8_points[3], R_F8_points[4], vel=deburr_vel, acc=deburr_acc)
+    movesx([R_F8_points[0], R_F8_points[1], R_F8_points[2], R_F8_points[3], R_F8_points[4]], vel=lmove_vel, acc=safe_acc)
+    #movec(R_F8_points[1], R_F8_points[2], vel=deburr_vel, acc=deburr_acc)
+    #movec(R_F8_points[3], R_F8_points[4], vel=deburr_vel, acc=deburr_acc)
     amovel(Global_R_F8_Backoff, vel=lmove_vel, acc=safe_acc)
     mwait(0)
 
@@ -699,7 +706,7 @@ def deburr_R_B1(ref_c):
     mwait(0)
     set_ref_coord(ref_c)
     movel(Global_R_B1_Reference, vel=lmove_vel, acc=safe_acc)
-    k_d1 = [1500.0, 1500.0, 1500.0, 1000.0, 1000.0, 1000.0]
+    k_d1 = [4000.0, 4000.0, 4000.0, 3000.0, 3000.0, 3000.0]
     task_compliance_ctrl(k_d1)
     force_desired = 20
     f_d = [0.0, 0.0, force_desired, 0.0, 0.0, 0.0]
@@ -734,7 +741,6 @@ def deburr_R_B1(ref_c):
     R_F3_deburr(R_F3, ref_c, delta_x, delta_y, delta_z)
     get_HMI_Offset()
     R_F5_deburr(R_F5, ref_c, delta_x, delta_y, delta_z)
-
     set_ref_coord(R_1_COORD_SYS)
     get_HMI_Offset()
     R_F7_deburr(R_F7, R_1_COORD_SYS, delta_x, delta_y, delta_z)
@@ -757,7 +763,7 @@ def deburr_R_B2(ref_c):
     mwait(0)
     set_ref_coord(ref_c)
     movel(Global_R_B2_Reference, vel=lmove_vel, acc=safe_acc)
-    k_d1 = [1500.0, 1500.0, 1500.0, 1000.0, 1000.0, 1000.0]
+    k_d1 = [4000.0, 4000.0, 4000.0, 3000.0, 3000.0, 3000.0]
     task_compliance_ctrl(k_d1)
     force_desired = 20
     f_d = [0.0, 0.0, force_desired, 0.0, 0.0, 0.0]

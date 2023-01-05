@@ -82,13 +82,13 @@ class WorkerThread(QThread):
             self.progress_tmr.emit(self.cntr)
             time.sleep(0.01)
             if self.cntr > 300.0:
-                self.stop_cnt()
+                self.stop = 1
 
     def stop_cnt(self):
         self.stop = 1
 
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QMainWindow):
     active = True
     cycles = 0
     PAUSE = 0
@@ -97,6 +97,7 @@ class Ui_MainWindow(object):
                      "out_feed_table_is_full": ("Please remove parts from out feed table", "Out feed table is full")}
 
     def __init__(self):
+        super().__init__()
         self.timer_thread_list = []
         self.LRL_thread_id = None
         self.LRR_thread_id = None
@@ -808,6 +809,7 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.menubar.addAction(self.menuFile.menuAction())
+
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
