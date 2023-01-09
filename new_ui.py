@@ -21,7 +21,6 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "localhost"
 # SERVER = "192.168.1.10"
 ADDR = (SERVER, PORT)
-RESPOND = "ready_to_transfer"
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
@@ -30,7 +29,6 @@ client.connect(ADDR)
 def popup(title, text):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
-
     msg.setText(text)
     msg.setWindowTitle(title)
     retval = msg.exec_()
@@ -838,10 +836,10 @@ class Ui_MainWindow(QMainWindow):
         # create a timer
         self.timer = QtCore.QTimer()
         # button trigger offset
-        self.PB_BR_Off_UP.clicked.connect(lambda: self.extra_offset_BR(dir=1))
-        self.PB_BR_Off_DOWN.clicked.connect(lambda: self.extra_offset_BR(dir=-1))
-        self.PB_SR_Off_UP.clicked.connect(lambda: self.extra_offset_SR(dir=1))
-        self.PB_SR_Off_DOWN.clicked.connect(lambda: self.extra_offset_SR(dir=-1))
+        self.PB_BR_Off_UP.clicked.connect(lambda: self.extra_offset_BR(dir=-1))
+        self.PB_BR_Off_DOWN.clicked.connect(lambda: self.extra_offset_BR(dir=1))
+        self.PB_SR_Off_UP.clicked.connect(lambda: self.extra_offset_SR(dir=-1))
+        self.PB_SR_Off_DOWN.clicked.connect(lambda: self.extra_offset_SR(dir=1))
         # run polling
         self.runPolling()
 
@@ -1015,6 +1013,10 @@ class Ui_MainWindow(QMainWindow):
     def status_updates(self, incoming):
         recv = incoming
         print(f"from status update recv is {recv}")
+        if recv == "name":
+            data = "HMI"
+            self.send(f"{data}")
+            print(f"Sent: {data}")
         if len(recv) == 36:
             self.trig_camera(recv)
         if recv in ["start_LRR", "start_LRL", "start_SRR", "start_SRL"]:
@@ -1058,21 +1060,6 @@ class Ui_MainWindow(QMainWindow):
             self.display_sr_wheel_stat()
             self.display_lr_wheel_stat()
             self.write_to_file()
-        # if recv[0] == "t":
-        #     if recv[1] == "b":
-        #         if recv[2] == "r":
-        #             self.LR_left_part_tmr.setText(f"{recv[3::]}")
-        #         elif recv[2] == "l":
-        #             self.LR_right_part_tmr.setText(f"{recv[3::]}")
-        #     elif recv[1] == "s":
-        #         if recv[2] == "r":
-        #             self.SR_left_part_tmr.setText(f"{recv[3::]}")
-        #         elif recv[2] == "l":
-        #             self.SR_right_part_tmr.setText(f"{recv[3::]}")
-        if recv == "name":
-            data = "HMI"
-            self.send(f"{data}")
-            print(f"Sent: {data}")
         if recv == "br_offset":
             self.send(f"HMI,r1,{self.BR_Offset}")
         elif recv == "sr_offset":

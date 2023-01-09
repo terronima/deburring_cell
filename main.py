@@ -76,63 +76,69 @@
 # # lis = [(1, 2, 3)]
 # # print(f'selected element: {lis[0][1]}')
 # #
-# # import socket
-# # import threading
-# # import time
-# #
-# # HEADER = 64
-# # PORT = 12347
-# # FORMAT = "utf-8"
-# # DISCONNECT_MESSAGE = "!DISCONNECT"
-# # SERVER = "localhost"
-# # # SERVER = "192.168.1.10"
-# # ADDR = (SERVER, PORT)
-# # RESPOND = "ready_to_transfer"
-# #
-# # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# # client.connect(ADDR)
-# #
-# #
-# # def encode(enc_msg):
-# #     message = enc_msg.encode(FORMAT)
-# #     msg_length = len(message)
-# #     send_length = str(msg_length).encode(FORMAT)
-# #     send_length += b' ' * (HEADER - len(send_length))
-# #     # print(f"Encoded: {message}")
-# #     message_return = (send_length, message)
-# #     return message_return
-# #
-# #
-# # def send(msg):
-# #     global client
-# #     message_enc = encode(msg)
-# #     try:
-# #         client.send(message_enc[0])
-# #         client.send(message_enc[1])
-# #     except:
-# #         print("Failed to send message")
-# #         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# #         client.connect(ADDR)
-# #         client.send(message_enc[0])
-# #         client.send(message_enc[1])
-# #
-# #
-# # def listen():
-# #     global client
-# #     received = ""
-# #     data = ""
-# #     while True:
-# #         try:
-# #             received = client.recv(64).decode(FORMAT)
-# #         except:
-# #             print("Failed to receive response")
-# #             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# #             client.connect(ADDR)
-# #         if received != "ping":
-# #             print(f"Received: {received}")
-# #             user_input = input()
-# #             send(f"{user_input}")
-# #             print(f"Sent: {user_input}")
+import socket
+import threading
+import time
+
+HEADER = 64
+PORT = 12347
+FORMAT = "utf-8"
+DISCONNECT_MESSAGE = "!DISCONNECT"
+SERVER = "localhost"
+# SERVER = "192.168.1.10"
+ADDR = (SERVER, PORT)
+RESPOND = "ready_to_transfer"
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
+
+
+def encode(enc_msg):
+    enc_msg = enc_msg + "\\n"
+    message = enc_msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    # print(f"Encoded: {message}")
+    message_return = (send_length, message)
+    return message_return
+
+
+def send(msg):
+    global client
+    message_enc = encode(msg)
+    try:
+        client.send(message_enc[0])
+        client.send(message_enc[1])
+    except:
+        print("Failed to send message")
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(ADDR)
+        client.send(message_enc[0])
+        client.send(message_enc[1])
+
+
+def listen():
+    global client
+    received = ""
+    data = ""
+    while True:
+        try:
+            received = client.recv(64).decode(FORMAT)
+            received = received.strip("z")
+        except:
+            print("Failed to receive response")
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect(ADDR)
+        if received != "z":
+            received = received.split("\\n")
+            print(f"Received: {received}")
+            user_input = input()
+            send(f"{user_input}")
+            print(f"Sent: {user_input}")
+
+
+listen()
 # #
 # #
 # # '''
@@ -416,35 +422,35 @@
 #     app = QApplication(sys.argv)
 #     window = MainWindow()
 #     sys.exit(app.exec())
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QLabel
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
-        # create a tab widget and set it as the central widget
-        self.tab_widget = QTabWidget(self)
-        self.setCentralWidget(self.tab_widget)
-
-        # create a child widget and add it to the tab widget
-        child_widget = QWidget()
-        self.tab_widget.addTab(child_widget, "Tab 1")
-
-        # create a child widget and add it to the tab widget
-        child_widget_2 = QWidget()
-        self.tab_widget.addTab(child_widget_2, "Tab 2")
-
-        # create a label and add it to the child widget
-        label = QLabel("Hello, World!", child_widget)
-        label.move(10, 10)
-
-        # create a label and add it to the child widget
-        label = QLabel("World!", child_widget_2)
-        label.move(10, 10)
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+# import sys
+# from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QLabel
+#
+# class MainWindow(QMainWindow):
+#     def __init__(self):
+#         super().__init__()
+#
+#         # create a tab widget and set it as the central widget
+#         self.tab_widget = QTabWidget(self)
+#         self.setCentralWidget(self.tab_widget)
+#
+#         # create a child widget and add it to the tab widget
+#         child_widget = QWidget()
+#         self.tab_widget.addTab(child_widget, "Tab 1")
+#
+#         # create a child widget and add it to the tab widget
+#         child_widget_2 = QWidget()
+#         self.tab_widget.addTab(child_widget_2, "Tab 2")
+#
+#         # create a label and add it to the child widget
+#         label = QLabel("Hello, World!", child_widget)
+#         label.move(10, 10)
+#
+#         # create a label and add it to the child widget
+#         label = QLabel("World!", child_widget_2)
+#         label.move(10, 10)
+#
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     window = MainWindow()
+#     window.show()
+#     sys.exit(app.exec_())

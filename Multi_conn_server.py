@@ -32,7 +32,7 @@ server.bind(ADDR)
 def isopen(conn, addr):
     while True:
         try:
-            conn.send(b"z")
+            conn.send(b"z\\n")
             #print(f"connected {addr}")
             time.sleep(1)
         except:
@@ -45,7 +45,10 @@ def isopen(conn, addr):
 def greet(conn, addr):
     conn.send(b"name")
     msg_length = int(conn.recv(HEADER).decode(FORMAT))
-    greet_resp = conn.recv(msg_length).decode(FORMAT)
+    greet_msg = conn.recv(msg_length).decode(FORMAT)
+    print("greet msg:" + greet_msg)
+    greet_msg = greet_msg.split("\\n")
+    greet_resp = greet_msg[0]
     print(f"Greet resp: {greet_resp} from {addr}")
     number = random.randint(1000, 99999)
     for i in CLIENT_TRACKING:

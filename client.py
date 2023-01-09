@@ -6,8 +6,8 @@ HEADER = 64
 PORT = 12347
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
-#SERVER = "localhost"
-SERVER = "192.168.1.9"
+SERVER = "localhost"
+#SERVER = "192.168.1.9"
 ADDR = (SERVER, PORT)
 RESPOND = "ready_to_transfer"
 
@@ -16,6 +16,7 @@ client.connect(ADDR)
 
 
 def encode(enc_msg):
+    enc_msg = enc_msg + "\\n"
     message = enc_msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -42,20 +43,24 @@ def send(msg):
 def listen():
     global client
     received = ""
-    data = ""
+    data = []
     while True:
         try:
             received = client.recv(64).decode(FORMAT)
             received = received.strip("z")
+            received = received.split("\\n")
+            for i in received:
+                if i not in ["", " ", "z"]:
+                    data.append(i)
+            print(f"Received: {data}")
         except:
             print("Failed to receive response")
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(ADDR)
-        if received != "ping":
-            print(f"Received: {received}")
-            user_input = input()
-            send(f"{user_input}")
-            print(f"Sent: {user_input}")
+        user_input = input()
+        send(f"{user_input}")
+        print(f"Sent: {user_input}")
+        data.clear()
 
 
 '''
