@@ -16,7 +16,7 @@ client.connect(ADDR)
 
 
 def encode(enc_msg):
-    enc_msg = enc_msg + "\\n"
+    enc_msg = enc_msg + "/n"
     message = enc_msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -47,8 +47,9 @@ def listen():
     while True:
         try:
             received = client.recv(64).decode(FORMAT)
-            received = received.strip("z")
-            received = received.split("\\n")
+            received = received.replace("z", "")
+            received = received.split("/n")
+            #received = [val for val in received if val != "z"]
             for i in received:
                 if i not in ["", " ", "z"]:
                     data.append(i)

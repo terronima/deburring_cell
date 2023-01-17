@@ -16,7 +16,6 @@ QUIT = ''
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
-
 '''def close_server():
     while True:
         try:
@@ -32,8 +31,8 @@ server.bind(ADDR)
 def isopen(conn, addr):
     while True:
         try:
-            conn.send(b"z\\n")
-            #print(f"connected {addr}")
+            conn.send(b"z/n")
+            # print(f"connected {addr}")
             time.sleep(1)
         except:
             print("failed")
@@ -43,12 +42,16 @@ def isopen(conn, addr):
 
 
 def greet(conn, addr):
-    conn.send(b"name")
+    conn.send(b"name/n")
     msg_length = int(conn.recv(HEADER).decode(FORMAT))
     greet_msg = conn.recv(msg_length).decode(FORMAT)
     print("greet msg:" + greet_msg)
-    greet_msg = greet_msg.split("\\n")
-    greet_resp = greet_msg[0]
+    greet_msg_list = greet_msg.split("/n")
+    for i in greet_msg_list:
+        if i in ["", " ", "z"]:
+            greet_msg_list.remove(i)
+    greet_resp = greet_msg_list[0]
+    greet_msg_list.clear()
     print(f"Greet resp: {greet_resp} from {addr}")
     number = random.randint(1000, 99999)
     for i in CLIENT_TRACKING:
@@ -60,7 +63,7 @@ def greet(conn, addr):
             print(f"Current list: {CLIENT_TRACKING}")
     CLIENT_TRACKING.append((number, greet_resp, conn))
     print(f"Conn# {number}")
-    transfer(greet_resp, "complete")
+    transfer(greet_resp, "complete/n")
     print("Greeting complete")
     return number
 

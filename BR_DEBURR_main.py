@@ -3,6 +3,12 @@ camera_map = 0
 pallet_map = []
 GREET = 0
 cntr = 0
+delta_L_B1_offset = None
+delta_L_B2_offset = None
+delta_R_B1_offset = None
+delta_R_B2_offset = None
+NEW_COORDINATE_SYS_FLAG_L = None
+NEW_COORDINATE_SYS_FLAG_R = None
 # check if part present in the gripper, if present, move to release position
 if get_digital_input(PART_PRESENT_SENSOR):
     Estop_recovery()
@@ -24,7 +30,7 @@ while True:
     # request pause state from HMI
     PAUSE = int(send("r1,HMI,is_r1_paused", 1))
     #   PAUSE = 0
-    tp_log(str(PAUSE))
+    tp_log("Pause state" + str(PAUSE))
     # if in pase mode, wait and request state again
     if PAUSE:
         time.sleep(1)
@@ -36,6 +42,12 @@ while True:
             camera_map = camera_map.strip("z")
             if len(camera_map) == 18:
                 break
+        # if no parts detected, break loop,and raise error on HMI
+        if sum(pallet_map) == 0:
+            NEW_COORDINATE_SYS_FLAG_R = 0
+            NEW_COORDINATE_SYS_FLAG_L = 0
+            tp_log("out of parts")
+            break
         # after camera data is received, process it for pick function
         pallet_map = []
         pallet_map_str = camera_map
@@ -83,20 +95,49 @@ while True:
                 if PICK_FLAG:
                     # set current ref coord sys
                     if SIDE == "L":
-                        deburr_L_B1(R_BRUSH_COORD_SYS)
-                        deburr_L_B2(L_BRUSH_COORD_SYS)
+                        # turn motor corresponding to side which going to be deburred
+                        set_digital_output(RIGHT_MOTOR, 0)
+                        set_digital_output(LEFT_MOTOR, 1)
+                        # touch the brush to get offsets
+                        if not NEW_COORDINATE_SYS_FLAG_L:
+                            delta_L_B1_offset = touch(R_BRUSH_COORD_SYS, Global_L_B1_Reference_j, Global_L_B1_Reference)
+                        # apply offsets to the points, and deburr all surfaces related to the brush
+                        deburr_L_B1(R_BRUSH_COORD_SYS, delta_L_B1_offset)
+                        # turn motor corresponding to side which going to be deburred
+                        set_digital_output(RIGHT_MOTOR, 1)
+                        set_digital_output(LEFT_MOTOR, 0)
+                        # touch the brush to get offsets
+                        if not NEW_COORDINATE_SYS_FLAG_L:
+                            delta_L_B2_offset = touch(L_BRUSH_COORD_SYS, Global_L_B2_Reference_j, Global_L_B2_Reference)
+                        # apply offsets to the points, and deburr all surfaces related to the brush
+                        deburr_L_B2(L_BRUSH_COORD_SYS, delta_L_B2_offset)
                         # stop processing timer
                         send("r1,HMI,stop_LRL", 0)
                         send("r1,HMI,stop_LRL", 0)
+                        NEW_COORDINATE_SYS_FLAG_L = 1
                         # pass
                     elif SIDE == "R":
-                        deburr_R_B1(R_BRUSH_COORD_SYS)
-                        deburr_R_B2(L_BRUSH_COORD_SYS)
+                        # turn motor corresponding to side which going to be deburred
+                        set_digital_output(RIGHT_MOTOR, 0)
+                        set_digital_output(LEFT_MOTOR, 1)
+                        # touch the brush to get offsets
+                        if not NEW_COORDINATE_SYS_FLAG_R:
+                            delta_R_B1_offset = touch(R_BRUSH_COORD_SYS, Global_R_B1_Reference_j, Global_R_B1_Reference)
+                        # apply offsets to the points, and deburr all surfaces related to the brush
+                        deburr_R_B1(R_BRUSH_COORD_SYS, delta_R_B1_offset)
+                        # turn motor corresponding to side which going to be deburred
+                        set_digital_output(RIGHT_MOTOR, 1)
+                        set_digital_output(LEFT_MOTOR, 0)
+                        # touch the brush to get offsets
+                        if not NEW_COORDINATE_SYS_FLAG_R:
+                            delta_R_B2_offset = touch(L_BRUSH_COORD_SYS, Global_L_B1_Reference_j, Global_L_B1_Reference)
+                        # apply offsets to the points, and deburr all surfaces related to the brush
+                        deburr_R_B2(L_BRUSH_COORD_SYS, delta_R_B2_offset)
                         # stop processing timer
                         send("r1,HMI,stop_LRR", 0)
                         send("r1,HMI,stop_LRR", 0)
                         # pass
-
+                        NEW_COORDINATE_SYS_FLAG_R = 1
                     # transfer part to the 2nd robot
                     handover()
                 # get position of the current element to remove from the list
@@ -109,6 +150,3 @@ while True:
                 tp_log("cntr is: " + str(cntr))
                 tp_log(str(pallet_map))
                 # check parts presnt on pallet, if empty, raise an error
-                if sum(pallet_map) == 0:
-                    tp_log("out of parts")
-                    break

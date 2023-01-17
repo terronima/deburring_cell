@@ -94,7 +94,7 @@ client.connect(ADDR)
 
 
 def encode(enc_msg):
-    enc_msg = enc_msg + "\\n"
+    enc_msg = enc_msg + "/n"
     message = enc_msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -121,21 +121,24 @@ def send(msg):
 def listen():
     global client
     received = ""
-    data = ""
+    data = []
     while True:
         try:
             received = client.recv(64).decode(FORMAT)
             received = received.strip("z")
+            rec_list = received.split("/n")
+            for i in rec_list:
+                if i not in ["", " ", "z"]:
+                    data.append(i)
+            print(data)
         except:
             print("Failed to receive response")
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(ADDR)
-        if received != "z":
-            received = received.split("\\n")
-            print(f"Received: {received}")
-            user_input = input()
-            send(f"{user_input}")
-            print(f"Sent: {user_input}")
+        user_input = input()
+        send(f"{user_input}")
+        print(f"Sent: {user_input}")
+        data.clear()
 
 
 listen()
